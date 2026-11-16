@@ -1,0 +1,63 @@
+{% extends layout_tpl %}
+
+{% block content %}
+<div class="center-modal-wrap">
+    <div class="card" style="max-width:480px; width:100%;">
+        <h2 style="margin:0 0 20px; font-size:22px; font-weight:800; display:flex; align-items:center; gap:10px;">
+            <i class="fas fa-user-plus" style="color:var(--primary);"></i>
+            <span>{{ t("member.register_title") }}</span>
+        </h2>
+        {% if not allow_register %}
+        <div style="padding:18px; border-radius:10px; background:rgba(248,113,113,0.12); border:1px solid rgba(248,113,113,0.3); color:#f87171; text-align:center;">
+            현재 관리자에 의해 신규 회원가입이 일시 중단되어 있습니다.
+        </div>
+        {% else %}
+        <form action="/member/register" method="post" style="display:flex; flex-direction:column; gap:14px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div>
+                <label style="font-size:13px; font-weight:600; color:var(--muted);">{{ t("member.id") }}</label>
+                <input type="text" name="mb_id" class="input" required>
+            </div>
+            <div>
+                <label style="font-size:13px; font-weight:600; color:var(--muted);">{{ t("member.password") }}</label>
+                <input type="password" name="mb_password" class="input" required>
+            </div>
+            <div>
+                <label style="font-size:13px; font-weight:600; color:var(--muted);">{{ t("member.name") }}</label>
+                <input type="text" name="mb_name" class="input" required>
+            </div>
+            <div>
+                <label style="font-size:13px; font-weight:600; color:var(--muted);">{{ t("member.email") }}</label>
+                <input type="email" name="mb_email" class="input" required>
+            </div>
+            {% if stipulation %}
+            <div>
+                <label style="font-size:12px; font-weight:600; color:var(--muted);">이용약관</label>
+                <textarea class="plain-textarea" rows="3" readonly style="font-size:12px;">{{ stipulation }}</textarea>
+                <label style="font-size:13px; display:flex; align-items:center; gap:6px; margin-top:6px;">
+                    <input type="checkbox" required> 이용약관에 동의합니다.
+                </label>
+            </div>
+            {% endif %}
+            {% if privacy %}
+            <div>
+                <label style="font-size:12px; font-weight:600; color:var(--muted);">개인정보처리방침</label>
+                <textarea class="plain-textarea" rows="3" readonly style="font-size:12px;">{{ privacy }}</textarea>
+                <label style="font-size:13px; display:flex; align-items:center; gap:6px; margin-top:6px;">
+                    <input type="checkbox" required> 개인정보처리방침에 동의합니다.
+                </label>
+            </div>
+            {% endif %}
+            <button type="submit" class="btn btn-primary" style="padding:12px; margin-top:4px;">
+                {{ t("common.register") }}
+            </button>
+        </form>
+        {% endif %}
+        <p style="text-align:center; font-size:13px; color:var(--muted); margin:16px 0 0;">
+            <a href="/member/login" style="font-weight:600;">{{ t("common.login") }}</a>
+            <span style="margin:0 8px; opacity:0.4;">|</span>
+            <a href="/">{{ t("common.home") }}</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang | default('ko') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ site_title }}{% endblock %}</title>
+    <meta property="og:site_name" content="{{ site_title }}">
+    <meta property="og:type" content="{{ og_type | default('website') }}">
+    <meta property="og:title" content="{{ og_title | default(site_title) }}">
+    {% if og_description %}<meta property="og:description" content="{{ og_description }}">{% endif %}
+    {% if og_image %}<meta property="og:image" content="{{ og_image }}">{% endif %}
+    <link rel="alternate" type="application/rss+xml" title="{{ site_title }} RSS" href="/rss">
+    <script>
+        (function() {
+            var saved = localStorage.getItem('rb_theme_mode');
+            var mode = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', mode);
+        })();
+    </script>
+    {% if add_meta %}{{ add_meta | safe }}{% endif %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="{{ theme_asset(current_theme, 'css/style.css') | safe }}">
+    {% if analytics_script %}{{ analytics_script | safe }}{% endif %}
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+{% if is_preview %}
+<div class="preview-banner">
+    <i class="fas fa-eye"></i> {{ t("common.preview_banner") }} ({{ current_theme }}) — {{ t("common.preview_admin_only") }}
+    <a href="/admin/themes" style="margin-left:12px; text-decoration:underline; color:#111827;">{{ t("common.back_to_themes") }}</a>
+</div>
+{% endif %}
+
+<header class="navbar">
+    <div class="container navbar-inner">
+        <a href="/" class="brand"><i class="fas fa-bolt" style="color:var(--primary);"></i> {{ site_title }}</a>
+        <nav class="nav-links">
+            <a href="/">{{ t("common.home") }}</a>
+            {% for b in nav_boards %}
+            <a href="/board/{{ b.bo_table }}">{{ b.bo_subject }}</a>
+            {% endfor %}
+        </nav>
+        <div class="nav-user">
+            <!-- Language Switcher -->
+            <select class="lang-select" aria-label="{{ t('common.language') }}" onchange="if(this.value) window.location.href='/lang/' + this.value;">
+                {% for lang in supported_langs %}
+                <option value="{{ lang.code }}" {% if lang.code == current_lang %}selected{% endif %}>{{ lang.flag }} {{ lang.label }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Light / Dark Mode Switch -->
+            <button type="button" id="rb-theme-toggle" class="btn btn-icon" title="{{ t('common.toggle_theme') }}" onclick="rbToggleTheme()">
+                <i id="rb-theme-icon" class="fas fa-moon"></i>
+            </button>
+
+            {% if current_user %}
+                <div class="noti-wrapper" id="rb-noti-wrapper">
+                    <button type="button" class="btn noti-bell-btn" id="rb-noti-bell" title="{{ t('noti.title') }}" onclick="rbToggleNotiDropdown(event)">
+                        <i class="fas fa-bell"></i>
+                        <span class="noti-badge" id="rb-noti-badge" style="{% if unread_noti <= 0 %}display:none;{% endif %}">{{ unread_noti }}</span>
+                    </button>
+                    <div class="noti-dropdown" id="rb-noti-dropdown">
+                        <div class="noti-dropdown-header">
+                            <span><i class="fas fa-bell" style="color:var(--primary);"></i> {{ t("noti.title") }}</span>
+                            <button type="button" class="noti-read-all-btn" onclick="rbMarkAllNotiRead()">{{ t("noti.mark_all_read") }}</button>
+                        </div>
+                        <div class="noti-list" id="rb-noti-list">
+                            <div class="noti-empty">{{ t("noti.loading") }}</div>
+                        </div>
+                    </div>
+                </div>
+                <a href="/member/memo" class="btn btn-icon" title="{{ t('memo.title') }}">
+                    <i class="fas fa-envelope"></i>
+                </a>
+                <a href="/member/profile" class="btn">
+                    <i class="fas fa-user"></i> {{ current_user.mb_name }}
+                    <span style="opacity:0.75;">(Lv.{{ current_user.mb_level }} · {{ current_user.mb_point | comma }}P)</span>
+                </a>
+                {% if current_user.mb_level >= 10 %}
+                <a href="/admin" class="btn btn-primary"><i class="fas fa-sliders"></i> {{ t("common.dashboard") }}</a>
+                {% endif %}
+                <form action="/member/logout" method="post" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="btn">{{ t("common.logout") }}</button>
+                </form>
+            {% else %}
+                <a href="/member/login" class="btn">{{ t("common.login") }}</a>
+                <a href="/member/register" class="btn btn-primary">{{ t("common.register") }}</a>
+            {% endif %}
+        </div>
+    </div>
+</header>
+
+<main class="container" style="padding-top: 28px; min-height: 70vh;">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+    <div class="container">
+        <strong>{{ site_title }}</strong> · Powered by CRust (Axum + SQLite FTS5 + MiniJinja + CRust_Editor) · {{ t("common.active_theme") }}: <code>{{ current_theme }}</code>
+    </div>
+</footer>
+
+<script>
+    function rbSyncThemeIcon() {
+        var mode = document.documentElement.getAttribute('data-theme') || 'light';
+        var icon = document.getElementById('rb-theme-icon');
+        if (icon) {
+            icon.className = mode === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            icon.style.color = mode === 'dark' ? '#fbbf24' : '';
+        }
+    }
+    function rbToggleTheme() {
+        var cur = document.documentElement.getAttribute('data-theme') || 'light';
+        var next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('rb_theme_mode', next);
+        rbSyncThemeIcon();
+    }
+    document.addEventListener('DOMContentLoaded', rbSyncThemeIcon);
+</script>
+{% if current_user %}
+<script>
+(function() {
+    var csrfToken = "{{ csrf_token }}";
+    var emptyMsg = "{{ t('noti.empty') }}";
+    var dropdown = document.getElementById('rb-noti-dropdown');
+    var listEl = document.getElementById('rb-noti-list');
+    var badgeEl = document.getElementById('rb-noti-badge');
+
+    function setBadge(count) {
+        if (!badgeEl) return;
+        if (count > 0) {
+            badgeEl.textContent = count > 99 ? '99+' : String(count);
+            badgeEl.style.display = 'inline-block';
+        } else {
+            badgeEl.textContent = '0';
+            badgeEl.style.display = 'none';
+        }
+    }
+
+    function iconForType(t) {
+        if (t === 'comment') return 'fa-comment-dots';
+        if (t === 'reply') return 'fa-reply';
+        if (t === 'level_up') return 'fa-arrow-trend-up';
+        if (t === 'memo') return 'fa-envelope';
+        if (t === 'report') return 'fa-flag';
+        return 'fa-bell';
+    }
+
+    function escapeHtml(s) {
+        var d = document.createElement('div');
+        d.textContent = s == null ? '' : String(s);
+        return d.innerHTML;
+    }
+
+    function renderNotifications(items) {
+        if (!listEl) return;
+        if (!items || items.length === 0) {
+            listEl.innerHTML = '<div class="noti-empty">' + escapeHtml(emptyMsg) + '</div>';
+            return;
+        }
+        listEl.innerHTML = items.map(function(it) {
+            var unreadCls = it.is_read === 0 ? ' unread' : '';
+            var href = it.target_url ? escapeHtml(it.target_url) : '#';
+            return '<div class="noti-item' + unreadCls + '" onclick="rbOpenNoti(' + it.id + ', \'' + href.replace(/'/g, "\\'") + '\')">'
+                + '<div class="noti-item-icon"><i class="fas ' + iconForType(it.noti_type) + '"></i></div>'
+                + '<div class="noti-item-body">'
+                + '<div class="noti-item-msg">' + escapeHtml(it.message) + '</div>'
+                + '<div class="noti-item-time">' + escapeHtml(it.created_at) + '</div>'
+                + '</div></div>';
+        }).join('');
+    }
+
+    window.rbLoadNotifications = function() {
+        fetch('/api/notifications', { credentials: 'same-origin' })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(data) {
+                if (!data) return;
+                setBadge(data.unread_count || 0);
+                renderNotifications(data.items || []);
+            })
+            .catch(function() {});
+    };
+
+    window.rbToggleNotiDropdown = function(ev) {
+        ev.stopPropagation();
+        if (!dropdown) return;
+        var willOpen = !dropdown.classList.contains('open');
+        dropdown.classList.toggle('open', willOpen);
+        if (willOpen) rbLoadNotifications();
+    };
+
+    window.rbOpenNoti = function(id, url) {
+        fetch('/api/notifications/' + id + '/read', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'X-CSRF-Token': csrfToken }
+        }).finally(function() {
+            if (url && url !== '#') {
+                window.location.href = url;
+            } else {
+                rbLoadNotifications();
+            }
+        });
+    };
+
+    window.rbMarkAllNotiRead = function() {
+        fetch('/api/notifications/read-all', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'X-CSRF-Token': csrfToken }
+        })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function() {
+            setBadge(0);
+            rbLoadNotifications();
+        });
+    };
+
+    document.addEventListener('click', function(ev) {
+        var wrap = document.getElementById('rb-noti-wrapper');
+        if (dropdown && wrap && !wrap.contains(ev.target)) {
+            dropdown.classList.remove('open');
+        }
+    });
+
+    if (window.EventSource) {
+        try {
+            var es = new EventSource('/api/notifications/stream');
+            es.addEventListener('notification', function() {
+                rbLoadNotifications();
+            });
+        } catch (e) {}
+    }
+})();
+</script>
+{% endif %}
+</body>
+</html>

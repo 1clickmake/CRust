@@ -1,0 +1,309 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<style>
+    .board-form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        align-items: end;
+    }
+    .board-section-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #38bdf8;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin: 16px 0 10px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--border);
+    }
+    .board-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+    .board-field label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #94a3b8;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .board-field .input,
+    .board-field select {
+        width: 100%;
+        min-width: 0;
+        height: 38px;
+        box-sizing: border-box;
+    }
+    .board-field .input:focus {
+        outline: none;
+        border-color: #38bdf8;
+        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+    .table-wrap {
+        width: 100%;
+        overflow-x: auto;
+    }
+    .badge-code {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 6px;
+        background: rgba(56, 189, 248, 0.12);
+        color: #38bdf8;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .badge-code:hover {
+        background: rgba(56, 189, 248, 0.22);
+    }
+    .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.75);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 1000;
+    }
+    .modal-backdrop.open {
+        display: flex;
+    }
+    .modal-card {
+        width: 100%;
+        max-width: 760px;
+        max-height: 90vh;
+        overflow-y: auto;
+        background: var(--surface);
+        border: 1px solid #475569;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    .modal-close {
+        background: transparent;
+        border: 1px solid #475569;
+        color: #94a3b8;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-close:hover {
+        background: var(--border);
+        color: #fff;
+    }
+</style>
+
+<h1 style="margin:0 0 20px;">📋 {{ t("admin.boards_title") }}</h1>
+
+<div class="card">
+    <h3 style="margin:0 0 14px;">{{ t("admin.boards_create_title") }}</h3>
+    <form action="/admin/boards/create" method="post" class="board-form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="board-field"><label>{{ t("admin.boards_code") }}</label><input type="text" name="bo_table" class="input" placeholder="qna" required></div>
+        <div class="board-field"><label>{{ t("admin.boards_name") }}</label><input type="text" name="bo_subject" class="input" placeholder="Q&amp;A" required></div>
+        <div class="board-field"><label>{{ t("admin.boards_category") }}</label><input type="text" name="bo_category_list" class="input" placeholder="Q,A"></div>
+        <div class="board-field"><label>{{ t("admin.boards_skin") }}</label>
+            <select name="bo_skin" class="input">
+                {% for sk in available_skins %}
+                <option value="{{ sk }}">{{ sk }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="board-field"><label>{{ t("admin.boards_read_lv") }}</label><input type="number" name="bo_read_level" value="1" min="1" max="10" class="input"></div>
+        <div class="board-field"><label>{{ t("admin.boards_write_lv") }}</label><input type="number" name="bo_write_level" value="2" min="1" max="10" class="input"></div>
+        <div class="board-field"><label>{{ t("admin.boards_write_pt") }}</label><input type="number" name="bo_write_point" value="10" class="input"></div>
+        <div class="board-field"><label>{{ t("admin.boards_down_pt") }}</label><input type="number" name="bo_download_point" value="-5" class="input"></div>
+        <div class="board-field"><button type="submit" class="btn btn-primary" style="height:38px; justify-content:center;"><i class="fas fa-plus"></i> {{ t("admin.boards_create_btn") }}</button></div>
+    </form>
+</div>
+
+<div class="card">
+    <h3 style="margin:0 0 14px;">{{ t("admin.boards_list_title") }}</h3>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ t("admin.boards_col_code") }}</th>
+                    <th>{{ t("admin.boards_col_title") }}</th>
+                    <th>{{ t("admin.boards_col_cat") }}</th>
+                    <th>{{ t("admin.boards_col_skin") }}</th>
+                    <th>{{ t("admin.boards_col_perm") }}</th>
+                    <th>{{ t("admin.boards_col_point") }}</th>
+                    <th style="text-align:right;">{{ t("admin.boards_col_manage") }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in boards %}
+                <tr>
+                    <td><a href="/board/{{ b.bo_table }}" class="badge-code">{{ b.bo_table }}</a></td>
+                    <td style="font-weight:600;">{{ b.bo_subject }}</td>
+                    <td style="font-size:12px; color:var(--muted);">{{ b.bo_category_list or '-' }}</td>
+                    <td><code>{{ b.bo_skin }}</code></td>
+                    <td>{{ b.bo_list_level }} / {{ b.bo_read_level }} / {{ b.bo_write_level }} / {{ b.bo_comment_level }} / {{ b.bo_download_level }}</td>
+                    <td>{{ b.bo_read_point }} / {{ b.bo_write_point }} / {{ b.bo_comment_point }} / {{ b.bo_download_point }}</td>
+                    <td style="text-align:right;">
+                        <button
+                            type="button"
+                            class="btn"
+                            style="padding:5px 12px; font-size:12px;"
+                            data-bo-table="{{ b.bo_table }}"
+                            data-bo-subject="{{ b.bo_subject }}"
+                            data-bo-category="{{ b.bo_category_list or '' }}"
+                            data-bo-skin="{{ b.bo_skin }}"
+                            data-list-level="{{ b.bo_list_level }}"
+                            data-read-level="{{ b.bo_read_level }}"
+                            data-write-level="{{ b.bo_write_level }}"
+                            data-comment-level="{{ b.bo_comment_level }}"
+                            data-download-level="{{ b.bo_download_level }}"
+                            data-read-point="{{ b.bo_read_point }}"
+                            data-write-point="{{ b.bo_write_point }}"
+                            data-comment-point="{{ b.bo_comment_point }}"
+                            data-download-point="{{ b.bo_download_point }}"
+                            onclick="openEditModal(this)">
+                            <i class="fas fa-sliders"></i> {{ t("common.edit") }}
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Board Edit Modal -->
+<div id="editBoardModal" class="modal-backdrop" onclick="if(event.target === this) closeEditModal();">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-pen-to-square" style="color:var(--accent);"></i>
+                <span>{{ t("admin.boards_modal_title") }}</span>
+                <span id="modal_bo_table_badge" class="badge-code"></span>
+            </h3>
+            <button type="button" class="modal-close" onclick="closeEditModal()" aria-label="Close">&times;</button>
+        </div>
+
+        <form action="/admin/boards/update" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" id="edit_bo_table" name="bo_table" value="">
+
+            <div class="board-section-title">{{ t("admin.boards_sec_basic") }}</div>
+            <div class="board-form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div class="board-field">
+                    <label>{{ t("admin.boards_name") }}</label>
+                    <input type="text" id="edit_bo_subject" name="bo_subject" class="input" required>
+                </div>
+                <div class="board-field">
+                    <label>{{ t("admin.boards_category") }}</label>
+                    <input type="text" id="edit_bo_category_list" name="bo_category_list" class="input">
+                </div>
+                <div class="board-field">
+                    <label>{{ t("admin.boards_skin") }}</label>
+                    <select id="edit_bo_skin" name="bo_skin" class="input" required>
+                        {% for sk in available_skins %}
+                        <option value="{{ sk }}">{{ sk }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="board-section-title">{{ t("admin.boards_sec_perm") }}</div>
+            <div class="board-form-grid" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));">
+                <div class="board-field">
+                    <label>{{ t("admin.boards_perm_list") }}</label>
+                    <input type="number" id="edit_bo_list_level" name="bo_list_level" min="1" max="10" class="input">
+                </div>
+                <div class="board-field">
+                    <label>{{ t("admin.boards_perm_read") }}</label>
+                    <input type="number" id="edit_bo_read_level" name="bo_read_level" min="1" max="10" class="input">
+                </div>
+                <div class="board-field">
+                    <label>{{ t("admin.boards_perm_write") }}</label>
+                    <input type="number" id="edit_bo_write_level" name="bo_write_level" min="1" max="10" class="input">
+                </div>
+                <div class="board-field">
+                    <label>{{ t("admin.boards_perm_comment") }}</label>
+                    <input type="number" id="edit_bo_comment_level" name="bo_comment_level" min="1" max="10" class="input">
+                </div>
+                <div class="board-field">
+                    <label>{{ t("admin.boards_perm_down") }}</label>
+                    <input type="number" id="edit_bo_download_level" name="bo_download_level" min="1" max="10" class="input">
+                </div>
+            </div>
+
+            <div class="board-section-title">{{ t("admin.boards_sec_point") }}</div>
+            <div class="board-form-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));">
+                <div class="board-field">
+                    <label>{{ t("admin.boards_pt_read") }}</label>
+                    <input type="number" id="edit_bo_read_point" name="bo_read_point" class="input">
+                </div>
+                <div class="board-field">
+                    <label>{{ t("admin.boards_write_pt") }}</label>
+                    <input type="number" id="edit_bo_write_point" name="bo_write_point" class="input">
+                </div>
+                <div class="board-field">
+                    <label>{{ t("admin.boards_pt_comment") }}</label>
+                    <input type="number" id="edit_bo_comment_point" name="bo_comment_point" class="input">
+                </div>
+                <div class="board-field">
+                    <label>{{ t("admin.boards_down_pt") }}</label>
+                    <input type="number" id="edit_bo_download_point" name="bo_download_point" class="input">
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:22px; padding-top:16px; border-top:1px solid var(--border);">
+                <button type="button" class="btn" onclick="closeEditModal()">{{ t("common.cancel") }}</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> {{ t("admin.boards_save_btn") }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openEditModal(btn) {
+    var d = btn.dataset;
+    document.getElementById('edit_bo_table').value = d.boTable;
+    document.getElementById('modal_bo_table_badge').textContent = d.boTable;
+    document.getElementById('edit_bo_subject').value = d.boSubject;
+    document.getElementById('edit_bo_category_list').value = d.boCategory || '';
+    document.getElementById('edit_bo_skin').value = d.boSkin;
+    document.getElementById('edit_bo_list_level').value = d.listLevel;
+    document.getElementById('edit_bo_read_level').value = d.readLevel;
+    document.getElementById('edit_bo_write_level').value = d.writeLevel;
+    document.getElementById('edit_bo_comment_level').value = d.commentLevel;
+    document.getElementById('edit_bo_download_level').value = d.downloadLevel;
+    document.getElementById('edit_bo_read_point').value = d.readPoint;
+    document.getElementById('edit_bo_write_point').value = d.writePoint;
+    document.getElementById('edit_bo_comment_point').value = d.commentPoint;
+    document.getElementById('edit_bo_download_point').value = d.downloadPoint;
+
+    document.getElementById('editBoardModal').classList.add('open');
+}
+
+function closeEditModal() {
+    document.getElementById('editBoardModal').classList.remove('open');
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeEditModal();
+});
+</script>
+{% endblock %}

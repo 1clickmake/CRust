@@ -1,0 +1,73 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+    <h1 style="margin:0;">📁 {{ t("admin.files_title") }}</h1>
+    {% if files %}
+    <div>
+        <form id="bulk-file-delete-form" action="/admin/files/bulk-delete" method="post" style="display:none;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="ids_csv" value="">
+        </form>
+        <button type="button" class="btn" style="background:#dc2626; border-color:#dc2626; color:#fff;" onclick="rbSubmitBulk('bulk-file-delete-form', 'chk-admin-file', '선택한 {n}개의 파일을 디스크와 DB에서 영구 삭제하시겠습니까?')">
+            <i class="fas fa-trash"></i> {{ t("admin.files_delete_sel") }}
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th style="width:36px;"><input type="checkbox" onclick="rbToggleAll(this, 'chk-admin-file')" title="전체 선택"></th>
+                <th>ID</th>
+                <th>{{ t("admin.files_col_type") }}</th>
+                <th>{{ t("admin.files_col_name") }}</th>
+                <th>{{ t("admin.files_col_size") }}</th>
+                <th>{{ t("admin.files_col_down") }}</th>
+                <th>{{ t("admin.files_col_status") }}</th>
+                <th>{{ t("admin.files_col_date") }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in files %}
+            <tr>
+                <td><input type="checkbox" class="chk-admin-file" value="{{ f.id }}"></td>
+                <td>{{ f.id }}</td>
+                <td><code>{{ f.file_type }}</code></td>
+                <td><a href="/api/download/{{ f.file_uuid }}" style="color:var(--accent);">{{ f.bf_source }}</a></td>
+                <td>{{ f.bf_filesize }}</td>
+                <td>{{ f.bf_download_count }}</td>
+                <td>{% if f.is_temp == 1 %}<span style="color:#fbbf24;">{{ t("admin.files_temp") }}</span>{% else %}<span style="color:#34d399;">#{{ f.post_id }} {{ t("admin.files_linked") }}</span>{% endif %}</td>
+                <td>{{ f.created_at }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" style="text-align:center; color:var(--muted);">{{ t("admin.files_empty") }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function rbToggleAll(master, cls) {
+    document.querySelectorAll('.' + cls).forEach(function(cb) {
+        if (!cb.disabled) cb.checked = master.checked;
+    });
+}
+function rbSubmitBulk(formId, cls, confirmMsg) {
+    var ids = Array.from(document.querySelectorAll('.' + cls + ':checked')).map(function(c) { return c.value; });
+    if (ids.length === 0) {
+        alert('선택된 항목이 없습니다.');
+        return false;
+    }
+    if (confirmMsg && !confirm(confirmMsg.replace('{n}', ids.length))) {
+        return false;
+    }
+    var form = document.getElementById(formId);
+    form.querySelector('input[name="ids_csv"]').value = ids.join(',');
+    form.submit();
+    return true;
+}
+</script>
+{% endblock %}

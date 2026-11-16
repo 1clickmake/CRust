@@ -1,0 +1,10 @@
+{% extends layout_tpl %}
+
+{% block content %}
+<div class="card">
+    <h1 style="margin:0 0 18px; padding-bottom:12px; border-bottom:1px solid var(--border);">{{ page.title }}</h1>
+    <div class="asamiya-content" style="line-height:1.75;">
+        {{ page.content_html | safe }}
+    </div>
+</div>
+{% endblock %}

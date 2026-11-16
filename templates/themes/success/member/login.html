@@ -1,0 +1,29 @@
+{% extends layout_tpl %}
+
+{% block content %}
+<div class="center-modal-wrap">
+    <div class="card" style="max-width:420px; width:100%;">
+        <h2 style="margin:0 0 20px; font-size:22px; font-weight:800; display:flex; align-items:center; gap:10px;">
+            <i class="fas fa-right-to-bracket" style="color:var(--primary);"></i>
+            <span>{{ t("member.login_title") }}</span>
+        </h2>
+        <form action="/member/login" method="post" style="display:flex; flex-direction:column; gap:16px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div>
+                <label style="font-size:13px; font-weight:600; color:var(--muted);">{{ t("member.id") }}</label>
+                <input type="text" name="mb_id" class="input" required placeholder="admin">
+            </div>
+            <div>
+                <label style="font-size:13px; font-weight:600; color:var(--muted);">{{ t("member.password") }}</label>
+                <input type="password" name="mb_password" class="input" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn btn-primary" style="padding:12px; margin-top:4px;">
+                <i class="fas fa-right-to-bracket"></i> {{ t("common.login") }}
+            </button>
+        </form>
+        <p style="text-align:center; font-size:13px; color:var(--muted); margin:18px 0 0;">
+            <a href="/" style="font-weight:600;"><i class="fas fa-home"></i> {{ t("common.home") }}</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

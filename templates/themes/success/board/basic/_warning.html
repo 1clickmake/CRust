@@ -1,0 +1,28 @@
+{% extends layout_tpl %}
+
+{% block content %}
+<div style="position:fixed; inset:0; background:rgba(9,13,24,0.65); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:20px; z-index:100;">
+    <div style="max-width:520px; width:100%; background:var(--glass-bg); border:1px solid rgba(245,158,11,0.55); border-radius:20px; padding:32px; box-shadow:0 24px 60px rgba(0,0,0,0.5); text-align:center;">
+        <div style="width:60px; height:60px; margin:0 auto 16px; border-radius:50%; background:rgba(245,158,11,0.18); border:1px solid rgba(245,158,11,0.45); display:flex; align-items:center; justify-content:center; font-size:26px; color:#f59e0b;">
+            <i class="fas fa-triangle-exclamation"></i>
+        </div>
+        <h2 style="margin:0 0 10px; font-size:22px; font-weight:800; color:var(--text);">
+            {{ t("success.board_warning_title") }}
+        </h2>
+        <p style="margin:0 0 24px; font-size:14px; color:var(--muted); line-height:1.6;">
+            {{ t("success.board_warning_desc") }}
+        </p>
+        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+            <a href="/admin/themes" class="glass-btn glass-btn-primary">
+                <i class="fas fa-palette"></i> {{ t("success.btn_themes") }}
+            </a>
+            <a href="/admin" class="glass-btn">
+                <i class="fas fa-gauge-high"></i> {{ t("success.btn_admin") }}
+            </a>
+            <a href="/" class="glass-btn">
+                <i class="fas fa-home"></i> {{ t("common.home") }}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

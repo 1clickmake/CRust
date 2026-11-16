@@ -1,0 +1,55 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div class="card">
+    <h2 style="margin:0 0 18px;"><i class="fas fa-flag" style="color:#ef4444;"></i> {{ t("report.admin_title") }}</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>{{ t("report.col_id") }}</th>
+                <th>{{ t("report.col_type") }}</th>
+                <th>{{ t("report.col_reporter") }}</th>
+                <th>{{ t("report.col_reason") }}</th>
+                <th>{{ t("report.col_status") }}</th>
+                <th>{{ t("report.col_action") }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in reports %}
+            <tr>
+                <td>#{{ r.id }}</td>
+                <td>
+                    <code>{{ r.target_type }}</code> #{{ r.target_id }}
+                    {% if r.bo_table %}
+                    <div><a href="/board/{{ r.bo_table }}/{{ r.target_id }}" target="_blank" style="font-size:12px; color:var(--accent);">{{ r.bo_table }}</a></div>
+                    {% endif %}
+                </td>
+                <td>{{ r.reporter_mb_name }} ({{ r.reporter_mb_id }})</td>
+                <td style="max-width:300px; white-space:pre-wrap;">{{ r.reason }}</td>
+                <td>
+                    {% if r.status == 'pending' %}
+                    <span style="padding:2px 8px; border-radius:999px; background:#f59e0b; color:#fff; font-size:11px; font-weight:700;">{{ t("report.status_pending") }}</span>
+                    {% elif r.status == 'resolved' %}
+                    <span style="padding:2px 8px; border-radius:999px; background:#10b981; color:#fff; font-size:11px; font-weight:700;">{{ t("report.status_resolved") }}</span>
+                    {% else %}
+                    <span style="padding:2px 8px; border-radius:999px; background:var(--muted); color:#fff; font-size:11px; font-weight:700;">{{ t("report.status_dismissed") }}</span>
+                    {% endif %}
+                    <div style="font-size:11px; color:var(--muted); margin-top:4px;">{{ r.created_at }}</div>
+                </td>
+                <td>
+                    <form action="/admin/reports/update" method="post" style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin:0;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="hidden" name="report_id" value="{{ r.id }}">
+                        <input type="text" name="admin_note" class="input" value="{{ r.admin_note or '' }}" placeholder="{{ t('report.admin_note_ph') }}" style="width:140px; padding:4px 8px; font-size:12px;">
+                        <button type="submit" name="status" value="resolved" class="btn btn-primary" style="padding:4px 10px; font-size:12px;">{{ t("report.resolve_btn") }}</button>
+                        <button type="submit" name="status" value="dismissed" class="btn" style="padding:4px 10px; font-size:12px;">{{ t("report.dismiss_btn") }}</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" style="text-align:center; padding:24px; color:var(--muted);">{{ t("report.empty") }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

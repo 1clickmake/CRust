@@ -1,0 +1,39 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<h1 style="margin:0 0 8px;">🎨 {{ t("admin.nav_themes") }}</h1>
+<p style="color:var(--muted); margin:0 0 24px;">
+    {{ t("admin.themes_desc") }}
+</p>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
+    {% for item in themes %}
+    <div class="card" style="{% if item.is_active %}border-color:var(--accent); box-shadow:0 0 0 1px var(--accent);{% endif %}">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="margin:0;">{{ item.meta.name }}</h3>
+            {% if item.is_active %}
+            <span style="background:var(--accent); color:var(--accent-text); padding:2px 10px; border-radius:999px; font-size:12px; font-weight:700;">{{ t("admin.theme_in_use") }}</span>
+            {% endif %}
+        </div>
+        <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">
+            {{ t("admin.theme_folder") }}: <code>{{ item.dir_name }}</code> · v{{ item.meta.version }} · {{ t("admin.theme_author") }}: {{ item.meta.author }}
+        </div>
+        {% set desc_key = "admin.theme_desc_" ~ item.dir_name %}
+        {% set translated_desc = t(desc_key) %}
+        <p style="font-size:14px; color:var(--text); min-height:44px; opacity:0.88;">
+            {% if translated_desc != desc_key %}{{ translated_desc }}{% else %}{{ item.meta.description }}{% endif %}
+        </p>
+        <div style="display:flex; gap:10px; margin-top:14px;">
+            <a href="/?preview_theme={{ item.dir_name }}" target="_blank" class="btn"><i class="fas fa-eye"></i> {{ t("admin.theme_preview") }}</a>
+            {% if not item.is_active %}
+            <form action="/admin/themes/activate" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="theme_name" value="{{ item.dir_name }}">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> {{ t("admin.theme_apply") }}</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

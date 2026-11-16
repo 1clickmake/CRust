@@ -1,0 +1,84 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+    <h1 style="margin:0;">👥 {{ t("admin.members_title") }}</h1>
+    <div>
+        <form id="bulk-member-delete-form" action="/admin/members/bulk-delete" method="post" style="display:none;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="ids_csv" value="">
+        </form>
+        <button type="button" class="btn" style="background:#dc2626; border-color:#dc2626; color:#fff;" onclick="rbSubmitBulk('bulk-member-delete-form', 'chk-admin-member', '선택한 {n}명의 회원을 탈퇴(삭제) 처리하시겠습니까?')">
+            <i class="fas fa-user-slash"></i> {{ t("admin.members_delete_sel") }}
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th style="width:36px;"><input type="checkbox" onclick="rbToggleAll(this, 'chk-admin-member')" title="전체 선택"></th>
+                <th>ID</th>
+                <th>{{ t("admin.members_col_info") }}</th>
+                <th>{{ t("admin.members_col_pt") }}</th>
+                <th>{{ t("admin.members_col_ctrl") }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in members %}
+            <tr>
+                <td>
+                    <input type="checkbox" class="chk-admin-member" value="{{ m.id }}" {% if m.mb_id == "admin" or (current_user and m.id == current_user.id) %}disabled title="최고관리자는 삭제할 수 없습니다"{% endif %}>
+                </td>
+                <td>{{ m.id }}</td>
+                <td>
+                    <strong>{{ m.mb_id }}</strong> ({{ m.mb_name }})<br>
+                    <span style="font-size:12px; color:var(--muted);">{{ m.mb_email }}</span>
+                </td>
+                <td><strong style="color:var(--accent);">{{ m.mb_point | comma }} P</strong></td>
+                <td>
+                    <form action="/admin/members/update" method="post" style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="hidden" name="member_id" value="{{ m.id }}">
+                        <select name="mb_level">
+                            {% for lv in levels %}
+                            <option value="{{ lv.level }}" {% if lv.level == m.mb_level %}selected{% endif %}>
+                                Lv.{{ lv.level }} ({{ lv.level_name }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <input type="number" name="point_delta" value="0" class="input" style="width:90px;">
+                        <input type="text" name="point_reason" placeholder="{{ t('admin.members_pt_reason') }}" class="input" style="width:140px;">
+                        <label style="font-size:12px;"><input type="checkbox" name="is_blocked" value="1" {% if m.is_blocked == 1 %}checked{% endif %}> {{ t("admin.members_block") }}</label>
+                        <button type="submit" class="btn btn-primary">{{ t("admin.levels_col_save") }}</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function rbToggleAll(master, cls) {
+    document.querySelectorAll('.' + cls).forEach(function(cb) {
+        if (!cb.disabled) cb.checked = master.checked;
+    });
+}
+function rbSubmitBulk(formId, cls, confirmMsg) {
+    var ids = Array.from(document.querySelectorAll('.' + cls + ':checked')).map(function(c) { return c.value; });
+    if (ids.length === 0) {
+        alert('선택된 항목이 없습니다.');
+        return false;
+    }
+    if (confirmMsg && !confirm(confirmMsg.replace('{n}', ids.length))) {
+        return false;
+    }
+    var form = document.getElementById(formId);
+    form.querySelector('input[name="ids_csv"]').value = ids.join(',');
+    form.submit();
+    return true;
+}
+</script>
+{% endblock %}

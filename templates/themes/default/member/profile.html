@@ -1,0 +1,185 @@
+{% extends layout_tpl %}
+
+{% block content %}
+{% if status_msg == "profile_updated" %}
+<div class="card" style="background:rgba(16,185,129,0.12); border-color:rgba(16,185,129,0.4); color:#10b981; font-weight:600;">
+    <i class="fas fa-circle-check"></i> 회원 정보(닉네임/이메일)가 성공적으로 저장되었습니다.
+</div>
+{% elif status_msg == "password_updated" %}
+<div class="card" style="background:rgba(16,185,129,0.12); border-color:rgba(16,185,129,0.4); color:#10b981; font-weight:600;">
+    <i class="fas fa-circle-check"></i> 비밀번호가 안전하게 변경되었습니다.
+</div>
+{% endif %}
+
+<div class="card">
+    <h2 style="margin:0 0 14px;"><i class="fas fa-id-card"></i> 마이페이지</h2>
+    <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:center;">
+        <div><strong>아이디:</strong> {{ current_user.mb_id }}</div>
+        <div><strong>닉네임:</strong> {{ current_user.mb_name }}</div>
+        <div><strong>이메일:</strong> {{ current_user.mb_email }}</div>
+        <div>
+            <strong>회원 등급:</strong>
+            <span class="badge-level" style="background:rgba(79,70,229,0.12); color:#4f46e5;">
+                {% if level_info %}
+                <i class="fas {{ level_info.badge_icon | default('fa-user') }}"></i> {{ level_info.level_name }}
+                {% endif %}
+                (Lv.{{ current_user.mb_level }})
+            </span>
+        </div>
+        <div><strong>보유 포인트:</strong> <strong style="color:#4f46e5;">{{ current_user.mb_point | comma }} P</strong></div>
+    </div>
+</div>
+
+<!-- 내 정보 수정 & 비밀번호 변경 -->
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
+    <div class="card">
+        <h3 style="margin:0 0 14px;"><i class="fas fa-user-pen"></i> 기본 정보 수정</h3>
+        <form action="/member/profile/update" method="post" style="display:flex; flex-direction:column; gap:12px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div>
+                <label style="font-size:12px; font-weight:600;">닉네임</label>
+                <input type="text" name="mb_name" value="{{ current_user.mb_name }}" class="input" required>
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:600;">이메일</label>
+                <input type="email" name="mb_email" value="{{ current_user.mb_email }}" class="input" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="align-self:flex-end;">정보 수정 저장</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3 style="margin:0 0 14px;"><i class="fas fa-key"></i> 비밀번호 변경</h3>
+        <form action="/member/profile/password" method="post" style="display:flex; flex-direction:column; gap:12px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div>
+                <label style="font-size:12px; font-weight:600;">현재 비밀번호</label>
+                <input type="password" name="current_password" class="input" required>
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:600;">새 비밀번호 (4자 이상)</label>
+                <input type="password" name="new_password" minlength="4" class="input" required>
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:600;">새 비밀번호 확인</label>
+                <input type="password" name="confirm_password" minlength="4" class="input" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="align-self:flex-end;">비밀번호 변경</button>
+        </form>
+    </div>
+</div>
+
+<!-- 내가 작성한 글 & 댓글 모아보기 -->
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap:20px;">
+    <div class="card">
+        <h3 style="margin:0 0 14px;"><i class="fas fa-pen-to-square"></i> 내가 작성한 글 ({{ my_posts | length }})</h3>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            {% for p in my_posts %}
+            <div style="display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); font-size:14px;">
+                <a href="/board/{{ p.bo_table }}/{{ p.id }}" style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                    [{{ p.bo_table }}] {{ p.wr_subject }}
+                </a>
+                <span style="font-size:12px; color:var(--muted); white-space:nowrap;">{{ p.created_at[:10] }}</span>
+            </div>
+            {% else %}
+            <p style="color:var(--muted); font-size:14px;">작성한 게시글이 없습니다.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin:0 0 14px;"><i class="fas fa-comments"></i> 내가 쓴 댓글 ({{ my_comments | length }})</h3>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            {% for c in my_comments %}
+            <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;">
+                <div style="display:flex; justify-content:space-between; gap:8px;">
+                    <a href="/board/{{ c.bo_table }}/{{ c.post_id }}" style="font-weight:600; color:var(--primary);">{{ c.wr_subject }}</a>
+                    <span style="font-size:12px; color:var(--muted);">{{ c.created_at[:10] }}</span>
+                </div>
+                <div style="margin-top:4px; opacity:0.9;">{{ c.co_content }}</div>
+            </div>
+            {% else %}
+            <p style="color:var(--muted); font-size:14px;">작성한 댓글이 없습니다.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- 포인트 내역 (필터링) & 내 알림 -->
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap:20px;">
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
+            <h3 style="margin:0;"><i class="fas fa-coins"></i> 포인트 변동 내역</h3>
+            <div style="display:flex; gap:6px;">
+                <a href="/member/profile?pt_filter=all" class="btn {% if pt_filter == 'all' %}btn-primary{% endif %}" style="padding:4px 10px; font-size:12px;">전체</a>
+                <a href="/member/profile?pt_filter=plus" class="btn {% if pt_filter == 'plus' %}btn-primary{% endif %}" style="padding:4px 10px; font-size:12px;">적립(+)</a>
+                <a href="/member/profile?pt_filter=minus" class="btn {% if pt_filter == 'minus' %}btn-primary{% endif %}" style="padding:4px 10px; font-size:12px;">차감(-)</a>
+            </div>
+        </div>
+        <table class="board-table">
+            <thead>
+                <tr><th>내용</th><th>변동</th><th>잔액</th><th>일시</th></tr>
+            </thead>
+            <tbody>
+                {% for log in point_logs %}
+                <tr>
+                    <td>{{ log.content }}</td>
+                    <td style="font-weight:700; color:{% if log.point >= 0 %}#10b981{% else %}#ef4444{% endif %};">
+                        {% if log.point >= 0 %}+{% endif %}{{ log.point | comma }}
+                    </td>
+                    <td>{{ log.balance_after | comma }}</td>
+                    <td style="font-size:12px; color:var(--muted);">{{ log.created_at }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="text-align:center; color:var(--muted);">해당 조건의 포인트 내역이 없습니다.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3 style="margin:0 0 14px;"><i class="fas fa-bell"></i> 내 알림</h3>
+        {% for n in notifications %}
+        <div style="padding:10px 0; border-bottom:1px solid var(--border); font-size:14px;">
+            <div>{{ n.message }}</div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-top:4px;">
+                <span>{{ n.created_at }}</span>
+                {% if n.target_url %}<a href="{{ n.target_url }}">확인하기 →</a>{% endif %}
+            </div>
+        </div>
+        {% else %}
+        <p style="color:var(--muted);">도착한 알림이 없습니다.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- 연결된 소셜 계정 (OAuth2) -->
+<div class="card" style="margin-top:20px;">
+    <h3 style="margin:0 0 14px;"><i class="fas fa-link"></i> {{ t("oauth.connected_title") }}</h3>
+    {% if enabled_oauth | length == 0 and oauth_links | length == 0 %}
+    <p style="margin:0; font-size:13px; color:var(--muted);">{{ t("oauth.no_enabled_providers") }}</p>
+    {% else %}
+    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+        {% for lk in oauth_links %}
+        <div style="display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid var(--primary); border-radius:8px; background:rgba(99,102,241,0.08); font-size:13px;">
+            <strong>{{ lk.provider | upper }}</strong>
+            <span style="color:#10b981; font-size:12px; font-weight:700;"><i class="fas fa-check"></i> {{ t("oauth.connected_badge") }}</span>
+            {% if lk.provider_email %}<span style="color:var(--muted); font-size:12px;">({{ lk.provider_email }})</span>{% endif %}
+            <form action="/member/oauth/{{ lk.provider }}/unlink" method="post" style="margin:0;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-danger" style="padding:2px 8px; font-size:11px;">{{ t("oauth.unlink_btn") }}</button>
+            </form>
+        </div>
+        {% endfor %}
+        {% for op in enabled_oauth %}
+        {% set is_linked = oauth_links | selectattr("provider", "equalto", op.provider) | list | length > 0 %}
+        {% if not is_linked %}
+        <a href="/auth/oauth/{{ op.provider }}" class="btn" style="padding:8px 14px; font-size:13px;">
+            <i class="fas fa-plus"></i> {{ op.display_name }} {{ t("oauth.connect_btn") }}
+        </a>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

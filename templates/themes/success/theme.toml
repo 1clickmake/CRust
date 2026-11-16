@@ -1,0 +1,5 @@
+name = "Success Welcome"
+slug = "success"
+version = "1.0.0"
+author = "Asamiya"
+description = "프레임워크 초기 세팅 완료를 알리는 라라벨 스타일 웰컴 랜딩 테마 (intro.png 배경 & 다국어/라이트·다크 지원)"

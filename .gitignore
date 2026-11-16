@@ -1,0 +1,11 @@
+/target
+**/*.rs.bk
+*.db
+*.db-shm
+*.db-wal
+/uploads/*
+!/uploads/.gitkeep
+config.toml
+.env
+.DS_Store
+Thumbs.db

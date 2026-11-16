@@ -1,0 +1,113 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+    <div>
+        <h1 style="margin:0 0 6px;"><i class="fas fa-wand-magic-sparkles" style="color:var(--accent);"></i> {{ t("ai.builder_title") }}</h1>
+        <p style="margin:0; font-size:13px; color:var(--muted);">{{ t("ai.builder_desc") }}</p>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+        <span style="font-size:12px; color:var(--muted);"><code>{{ ai_provider }}</code> · <code>{{ ai_model }}</code> · <code>{{ ai_reasoning_effort }}</code></span>
+        <a href="/admin/ai-settings" class="btn"><i class="fas fa-sliders"></i> {{ t("admin.nav_ai_settings") }}</a>
+    </div>
+</div>
+
+<div class="card">
+    <div style="margin-bottom:12px;">
+        <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">{{ t("ai.prompt_label") }}</label>
+        <textarea id="ai-prompt-input" rows="3" class="input" style="width:100%; box-sizing:border-box;" placeholder="{{ t('ai.prompt_ph') }}"></textarea>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+        <span style="font-size:12px; color:var(--muted);">{{ t("ai.whitelist_prefix") }}: <code>{{ allowed_paths }}</code></span>
+        <button type="button" id="ai-gen-btn" class="btn btn-primary" onclick="rbGenerateAiPlan()">
+            <i class="fas fa-bolt"></i> {{ t("ai.generate_btn") }}
+        </button>
+    </div>
+
+    <form action="/admin/ai-builder/apply" method="post" style="display:flex; flex-direction:column; gap:10px; border-top:1px solid var(--border); padding-top:16px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label style="font-size:13px; font-weight:600;">{{ t("ai.plan_json_label") }}</label>
+        <textarea id="ai-plan-json" name="plan_json" rows="9" class="input" style="width:100%; box-sizing:border-box; font-family:monospace; font-size:12px;" required>{"summary": "", "actions": []}</textarea>
+        <div style="display:flex; justify-content:flex-end;">
+            <button type="submit" class="btn btn-primary" style="background:#10b981; border-color:#10b981;">
+                <i class="fas fa-shield-check"></i> {{ t("ai.apply_btn") }}
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h3 style="margin:0 0 14px;"><i class="fas fa-clock-rotate-left"></i> {{ t("ai.history_title") }}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>{{ t("ai.col_id") }}</th>
+                <th>{{ t("ai.col_summary") }}</th>
+                <th>{{ t("ai.col_provider") }}</th>
+                <th>{{ t("ai.col_status") }}</th>
+                <th>{{ t("ai.col_date") }}</th>
+                <th>{{ t("ai.col_action") }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in backups %}
+            <tr>
+                <td>#{{ b.id }}</td>
+                <td>{{ b.prompt_summary }}</td>
+                <td><code>{{ b.provider_used }}</code></td>
+                <td>
+                    {% if b.status == 'applied' %}
+                    <span style="padding:2px 8px; border-radius:999px; background:#10b981; color:#fff; font-size:11px; font-weight:700;">{{ t("ai.status_applied") }}</span>
+                    {% else %}
+                    <span style="padding:2px 8px; border-radius:999px; background:var(--muted); color:#fff; font-size:11px; font-weight:700;">{{ t("ai.status_rolled_back") }}</span>
+                    {% endif %}
+                </td>
+                <td style="font-size:12px; color:var(--muted);">{{ b.created_at }}</td>
+                <td>
+                    {% if b.status == 'applied' %}
+                    <form action="/admin/ai-builder/rollback" method="post" style="margin:0;" onsubmit="return confirm('{{ t("ai.confirm_rollback") }}');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="hidden" name="backup_id" value="{{ b.id }}">
+                        <button type="submit" class="btn" style="padding:4px 10px; font-size:12px; color:#f59e0b;">
+                            <i class="fas fa-rotate-left"></i> {{ t("ai.rollback_btn") }}
+                        </button>
+                    </form>
+                    {% else %}
+                    <span style="font-size:12px; color:var(--muted);">-</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" style="text-align:center; padding:24px; color:var(--muted);">{{ t("ai.empty_history") }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+async function rbGenerateAiPlan() {
+    var promptEl = document.getElementById('ai-prompt-input');
+    var btn = document.getElementById('ai-gen-btn');
+    var planEl = document.getElementById('ai-plan-json');
+    if (!promptEl.value.trim()) { alert("{{ t('ai.prompt_empty') }}"); return; }
+    btn.disabled = true;
+    try {
+        const res = await fetch('/admin/ai-builder/plan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ prompt: promptEl.value.trim() })
+        });
+        const data = await res.json();
+        if (data.error) { alert(data.error); return; }
+        if (data.plan_json) planEl.value = data.plan_json;
+    } catch (e) {
+        alert(String(e));
+    } finally {
+        btn.disabled = false;
+    }
+}
+</script>
+{% endblock %}

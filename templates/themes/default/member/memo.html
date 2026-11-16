@@ -1,0 +1,98 @@
+{% extends layout_tpl %}
+
+{% block content %}
+<div class="card" style="margin-bottom:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+        <h2 style="margin:0;"><i class="fas fa-envelope"></i> {{ t("memo.title") }}</h2>
+        <div style="display:flex; gap:8px;">
+            <a href="/member/memo?tab=inbox" class="btn {% if tab == 'inbox' %}btn-primary{% endif %}">{{ t("memo.inbox") }}</a>
+            <a href="/member/memo?tab=sent" class="btn {% if tab == 'sent' %}btn-primary{% endif %}">{{ t("memo.sent") }}</a>
+            <a href="/member/memo?tab=compose" class="btn {% if tab == 'compose' %}btn-primary{% endif %}"><i class="fas fa-paper-plane"></i> {{ t("memo.compose") }}</a>
+        </div>
+    </div>
+
+    {% if viewing %}
+    <div style="padding:16px; border:1px solid var(--primary); border-radius:10px; background:rgba(99,102,241,0.06); margin-bottom:18px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <strong style="font-size:16px;">{{ viewing.me_subject }}</strong>
+            <span style="font-size:12px; color:var(--muted);">{{ viewing.created_at }}</span>
+        </div>
+        <div style="font-size:13px; color:var(--muted); margin-bottom:12px;">
+            {{ t("memo.sender") }}: <strong>{{ viewing.sender_mb_name }} ({{ viewing.sender_mb_id }})</strong> ·
+            {{ t("memo.receiver") }}: <strong>{{ viewing.receiver_mb_name }} ({{ viewing.receiver_mb_id }})</strong>
+        </div>
+        <div style="white-space:pre-wrap; line-height:1.6;">{{ viewing.me_content }}</div>
+        <div style="margin-top:12px; display:flex; gap:8px;">
+            <a href="/member/memo?tab=compose&to={{ viewing.sender_mb_id }}" class="btn btn-primary" style="padding:4px 12px; font-size:12px;"><i class="fas fa-reply"></i> {{ t("board.reply") }}</a>
+            <form action="/member/memo/{{ viewing.id }}/delete" method="post" style="margin:0;" onsubmit="return confirm('{{ t("memo.confirm_delete") }}');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-danger" style="padding:4px 12px; font-size:12px;">{{ t("common.delete") }}</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if tab == 'compose' %}
+    <form action="/member/memo/send" method="post" style="display:flex; flex-direction:column; gap:12px; max-width:620px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div>
+            <label style="font-size:13px; color:var(--muted); display:block; margin-bottom:4px;">{{ t("memo.to_id") }}</label>
+            <input type="text" name="receiver_mb_id" class="input" value="{{ prefill_to }}" required>
+        </div>
+        <div>
+            <label style="font-size:13px; color:var(--muted); display:block; margin-bottom:4px;">{{ t("memo.subject") }}</label>
+            <input type="text" name="me_subject" class="input" required>
+        </div>
+        <div>
+            <label style="font-size:13px; color:var(--muted); display:block; margin-bottom:4px;">{{ t("memo.content") }}</label>
+            <textarea name="me_content" class="plain-textarea" rows="5" required></textarea>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12px; color:var(--muted);">{{ t("memo.point_cost_hint") }} <strong>{{ memo_cost | comma }} P</strong></span>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> {{ t("memo.send_btn") }}</button>
+        </div>
+    </form>
+    {% else %}
+    {% set items = sent if tab == 'sent' else inbox %}
+    <table>
+        <thead>
+            <tr>
+                <th>{{ t("memo.subject") }}</th>
+                <th>{% if tab == 'sent' %}{{ t("memo.receiver") }}{% else %}{{ t("memo.sender") }}{% endif %}</th>
+                <th>{{ t("memo.date") }}</th>
+                <th>{{ t("memo.status") }}</th>
+                <th>{{ t("common.delete") }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in items %}
+            <tr>
+                <td>
+                    <a href="/member/memo?tab={{ tab }}&view={{ m.id }}" style="font-weight:{% if not m.read_at and tab != 'sent' %}700{% else %}500{% endif %}; color:var(--text); text-decoration:none;">
+                        {{ m.me_subject }}
+                    </a>
+                </td>
+                <td>{% if tab == 'sent' %}{{ m.receiver_mb_name }} ({{ m.receiver_mb_id }}){% else %}{{ m.sender_mb_name }} ({{ m.sender_mb_id }}){% endif %}</td>
+                <td style="font-size:12px; color:var(--muted);">{{ m.created_at }}</td>
+                <td style="font-size:12px;">
+                    {% if m.read_at %}
+                    <span style="color:var(--muted);">{{ t("memo.read") }}</span>
+                    {% else %}
+                    <span style="color:var(--primary); font-weight:700;">{{ t("memo.unread") }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <form action="/member/memo/{{ m.id }}/delete" method="post" style="margin:0;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-danger" style="padding:3px 10px; font-size:12px;">{{ t("common.delete") }}</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" style="text-align:center; padding:24px; color:var(--muted);">{{ t("memo.empty") }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

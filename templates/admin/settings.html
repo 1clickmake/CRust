@@ -1,0 +1,256 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<style>
+    .set-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+    }
+    .set-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+    .set-field label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+    }
+    .set-field .input,
+    .set-field select,
+    .set-field textarea {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .set-field .input,
+    .set-field select {
+        height: 38px;
+    }
+    .set-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 38px;
+        padding: 0 12px;
+        border-radius: 6px;
+        border: 1px solid var(--btn-border);
+        background: var(--input-bg);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    .set-hint {
+        font-size: 11px;
+        color: var(--muted);
+    }
+    .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 0 0 16px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+    }
+    .section-head h3 {
+        margin: 0;
+        font-size: 16px;
+        color: var(--accent);
+    }
+</style>
+
+<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:20px;">
+    <h1 style="margin:0;">⚙️ {{ t("admin.settings_title") }}</h1>
+    <span style="font-size:12px; color:var(--muted);">{{ t("admin.client_ip") }}: <code>{{ client_ip }}</code></span>
+</div>
+
+<form action="/admin/settings" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <!-- 1. 홈페이지 기본 설정 -->
+    <div class="card">
+        <div class="section-head">
+            <h3><i class="fas fa-globe"></i> {{ t("admin.sec1_title") }}</h3>
+        </div>
+        <div class="set-grid">
+            <div class="set-field">
+                <label>{{ t("admin.site_title_label") }}</label>
+                <input type="text" name="site_title" value="{{ settings.site_title }}" class="input" required>
+            </div>
+            <div class="set-field">
+                <label>{{ t("admin.admin_email_label") }}</label>
+                <input type="email" name="admin_email" value="{{ settings.admin_email }}" class="input" required>
+            </div>
+            <div class="set-field">
+                <label>{{ t("admin.default_lang_label") }}</label>
+                <select name="default_lang" class="input">
+                    {% for lang in supported_langs %}
+                    <option value="{{ lang.code }}" {% if settings.default_lang == lang.code %}selected{% endif %}>{{ lang.flag }} {{ lang.label }} ({{ lang.code }})</option>
+                    {% endfor %}
+                    <option value="auto" {% if settings.default_lang == "auto" %}selected{% endif %}>🌐 {{ t("admin.lang_auto") }}</option>
+                </select>
+                <span class="set-hint">{{ t("admin.default_lang_hint") }}</span>
+            </div>
+            <div class="set-field">
+                <label>{{ t("admin.page_rows_label") }}</label>
+                <input type="number" name="page_rows" value="{{ settings.page_rows }}" min="5" max="100" class="input" required>
+            </div>
+            <div class="set-field">
+                <label>{{ t("admin.write_pages_label") }}</label>
+                <input type="number" name="write_pages" value="{{ settings.write_pages }}" min="3" max="20" class="input" required>
+            </div>
+        </div>
+        <div class="set-grid" style="margin-top:16px;">
+            <div class="set-field">
+                <label>{{ t("admin.add_meta_label") }}</label>
+                <textarea name="add_meta" rows="3" class="input" style="height:auto; font-family:monospace; font-size:12px;" placeholder='<meta name="description" content="...">'>{{ settings.add_meta }}</textarea>
+            </div>
+            <div class="set-field">
+                <label>{{ t("admin.analytics_label") }}</label>
+                <textarea name="analytics_script" rows="3" class="input" style="height:auto; font-family:monospace; font-size:12px;" placeholder="<script>...</script>">{{ settings.analytics_script }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 전역 포인트 정책 -->
+    <div class="card" id="points">
+        <div class="section-head">
+            <h3><i class="fas fa-coins"></i> {{ t("admin.sec2_title") }}</h3>
+            {% if settings.use_point %}
+            <span style="background:rgba(52,211,153,0.18); color:#34d399; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:700;">{{ t("admin.theme_in_use") }}</span>
+            {% else %}
+            <span style="background:rgba(248,113,113,0.18); color:#f87171; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:700;">{{ t("admin.point_disabled") }}</span>
+            {% endif %}
+        </div>
+        <div class="set-grid">
+            <div class="set-field">
+                <label>{{ t("admin.use_point_label") }}</label>
+                <label class="set-toggle">
+                    <input type="checkbox" name="use_point" value="1" {% if settings.use_point %}checked{% endif %} style="width:16px; height:16px; accent-color:var(--accent);">
+                    <span>{{ t("admin.use_point_check") }}</span>
+                </label>
+                <span class="set-hint">{{ t("admin.use_point_hint") }}</span>
+            </div>
+            <div class="set-field">
+                <label>{{ t("admin.login_point_label") }}</label>
+                <input type="number" name="login_point" value="{{ settings.login_point }}" min="0" class="input" required>
+            </div>
+            <div class="set-field">
+                <label>{{ t("admin.register_point_label") }}</label>
+                <input type="number" name="register_point" value="{{ settings.register_point }}" min="0" class="input" required>
+            </div>
+            <div class="set-field">
+                <label>{{ t("admin.memo_point_label") }}</label>
+                <input type="number" name="memo_send_point" value="{{ settings.memo_send_point }}" min="0" class="input" required>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 게시판 기본 설정 & 스팸 방어 -->
+    <div class="card">
+        <div class="section-head">
+            <h3><i class="fas fa-shield-cat"></i> {{ t("admin.sec3_title") }}</h3>
+        </div>
+        <div class="set-grid">
+            <div class="set-field">
+                <label>{{ t("admin.delay_sec_label") }}</label>
+                <input type="number" name="delay_sec" value="{{ settings.delay_sec }}" min="0" class="input" required>
+                <span class="set-hint">{{ t("admin.delay_sec_hint") }}</span>
+            </div>
+            <div class="set-field">
+                <label>{{ t("admin.link_target_label") }}</label>
+                <select name="link_target">
+                    <option value="_blank" {% if settings.link_target == "_blank" %}selected{% endif %}>{{ t("admin.link_blank") }}</option>
+                    <option value="_self" {% if settings.link_target == "_self" %}selected{% endif %}>{{ t("admin.link_self") }}</option>
+                </select>
+            </div>
+        </div>
+        <div class="set-field" style="margin-top:16px;">
+            <label>{{ t("admin.filter_words_label") }}</label>
+            <textarea name="filter_words" rows="2" class="input" style="height:auto;">{{ settings.filter_words }}</textarea>
+            <span class="set-hint">{{ t("admin.filter_words_hint") }}</span>
+        </div>
+    </div>
+
+    <!-- 4. 회원가입 설정 -->
+    <div class="card">
+        <div class="section-head">
+            <h3><i class="fas fa-user-plus"></i> {{ t("admin.sec4_title") }}</h3>
+        </div>
+        <div class="set-grid">
+            <div class="set-field">
+                <label>{{ t("admin.allow_register_label") }}</label>
+                <label class="set-toggle">
+                    <input type="checkbox" name="allow_register" value="1" {% if settings.allow_register %}checked{% endif %} style="width:16px; height:16px; accent-color:var(--accent);">
+                    <span>{{ t("admin.allow_register_check") }}</span>
+                </label>
+            </div>
+            <div class="set-field">
+                <label>{{ t("admin.register_level_label") }}</label>
+                <input type="number" name="register_level" value="{{ settings.register_level }}" min="1" max="10" class="input" required>
+            </div>
+            <div class="set-field" style="grid-column: span 2;">
+                <label>{{ t("admin.prohibit_id_label") }}</label>
+                <input type="text" name="prohibit_id" value="{{ settings.prohibit_id }}" class="input">
+            </div>
+        </div>
+        <div class="set-grid" style="margin-top:16px;">
+            <div class="set-field">
+                <label>{{ t("admin.stipulation_label") }}</label>
+                <textarea name="stipulation" rows="4" class="input" style="height:auto;">{{ settings.stipulation }}</textarea>
+            </div>
+            <div class="set-field">
+                <label>{{ t("admin.privacy_label") }}</label>
+                <textarea name="privacy" rows="4" class="input" style="height:auto;">{{ settings.privacy }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. 접근 제어 & IP 보안 -->
+    <div class="card">
+        <div class="section-head">
+            <h3><i class="fas fa-ban"></i> {{ t("admin.sec5_title") }}</h3>
+        </div>
+        <div class="set-grid">
+            <div class="set-field">
+                <label>{{ t("admin.possible_ip_label") }}</label>
+                <textarea name="possible_ip" rows="3" class="input" style="height:auto; font-family:monospace;" placeholder="127.0.0.1&#10;192.168.0.">{{ settings.possible_ip }}</textarea>
+                <span class="set-hint">{{ t("admin.possible_ip_hint") }}</span>
+            </div>
+            <div class="set-field">
+                <label>{{ t("admin.intercept_ip_label") }}</label>
+                <textarea name="intercept_ip" rows="3" class="input" style="height:auto; font-family:monospace;" placeholder="203.0.113.10">{{ settings.intercept_ip }}</textarea>
+                <span class="set-hint">{{ t("admin.intercept_ip_hint") }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. 미디어 & 이미지 최적화 설정 -->
+    <div class="card">
+        <div class="section-head">
+            <h3><i class="fas fa-images"></i> {{ t("admin.sec6_title") }}</h3>
+        </div>
+        <div class="set-grid">
+            <div class="set-field">
+                <label>{{ t("admin.img_max_width_label") }}</label>
+                <input type="number" name="img_max_width" value="{{ settings.img_max_width }}" min="0" max="4096" class="input" required>
+                <span class="set-hint">{{ t("admin.img_max_width_hint") }}</span>
+            </div>
+            <div class="set-field">
+                <label>{{ t("admin.img_webp_label") }}</label>
+                <label class="set-toggle">
+                    <input type="checkbox" name="img_webp_enabled" value="1" {% if settings.img_webp_enabled %}checked{% endif %} style="width:16px; height:16px; accent-color:var(--accent);">
+                    <span>{{ t("admin.img_webp_check") }}</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:12px; position:sticky; bottom:16px; background:var(--surface); padding:12px 16px; border-radius:10px; border:1px solid var(--border); box-shadow:0 4px 16px rgba(0,0,0,0.15);">
+        <button type="submit" class="btn btn-primary" style="padding:10px 24px; font-size:14px;">
+            <i class="fas fa-floppy-disk"></i> {{ t("admin.save_all_settings") }}
+        </button>
+    </div>
+</form>
+{% endblock %}

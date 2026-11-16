@@ -1,0 +1,51 @@
+{% extends layout_tpl %}
+
+{% block content %}
+<div class="card" style="max-width:520px; margin:30px auto;">
+    <h2 style="margin:0 0 20px;"><i class="fas fa-user-plus"></i> {{ t("member.register_title") }}</h2>
+    {% if not allow_register %}
+    <div style="padding:18px; border-radius:8px; background:rgba(248,113,113,0.12); border:1px solid rgba(248,113,113,0.3); color:#f87171; text-align:center;">
+        {{ t("member.reg_disabled") }}
+    </div>
+    {% else %}
+    <form action="/member/register" method="post" style="display:flex; flex-direction:column; gap:14px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div>
+            <label style="font-size:13px; font-weight:600;">{{ t("member.reg_id_label") }}</label>
+            <input type="text" name="mb_id" class="input" required>
+        </div>
+        <div>
+            <label style="font-size:13px; font-weight:600;">{{ t("member.reg_pw_label") }}</label>
+            <input type="password" name="mb_password" class="input" required>
+        </div>
+        <div>
+            <label style="font-size:13px; font-weight:600;">{{ t("member.name") }}</label>
+            <input type="text" name="mb_name" class="input" required>
+        </div>
+        <div>
+            <label style="font-size:13px; font-weight:600;">{{ t("member.email") }}</label>
+            <input type="email" name="mb_email" class="input" required>
+        </div>
+        {% if stipulation %}
+        <div>
+            <label style="font-size:12px; font-weight:600; color:var(--muted);">{{ t("admin.stipulation_label") }}</label>
+            <textarea class="plain-textarea" rows="4" readonly style="font-size:12px;">{{ stipulation }}</textarea>
+            <label style="font-size:13px; display:flex; align-items:center; gap:6px; margin-top:6px;">
+                <input type="checkbox" required> {{ t("member.agree_stipulation") }}
+            </label>
+        </div>
+        {% endif %}
+        {% if privacy %}
+        <div>
+            <label style="font-size:12px; font-weight:600; color:var(--muted);">{{ t("admin.privacy_label") }}</label>
+            <textarea class="plain-textarea" rows="4" readonly style="font-size:12px;">{{ privacy }}</textarea>
+            <label style="font-size:13px; display:flex; align-items:center; gap:6px; margin-top:6px;">
+                <input type="checkbox" required> {{ t("member.agree_privacy") }}
+            </label>
+        </div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary" style="justify-content:center; padding:12px;">{{ t("member.reg_submit") }}</button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

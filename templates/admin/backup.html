@@ -1,0 +1,35 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<h1 style="margin:0 0 20px;">💾 {{ t("admin.backup_title") }}</h1>
+
+<div class="card">
+    <h3 style="margin:0 0 10px;">{{ t("admin.backup_subtitle") }}</h3>
+    <p style="font-size:14px; color:var(--muted); margin:0 0 18px; line-height:1.6;">
+        {{ t("admin.backup_desc") }}
+    </p>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:14px; margin-bottom:22px;">
+        <div style="background:var(--bg); padding:14px; border-radius:8px; border:1px solid var(--border);">
+            <div style="font-size:12px; color:var(--muted);">{{ t("admin.backup_db_size") }}</div>
+            <div style="font-size:20px; font-weight:700; color:var(--accent); margin-top:4px;">{{ db_kb }} KB <span style="font-size:12px; color:var(--muted);">(+{{ wal_kb }} KB)</span></div>
+        </div>
+        <div style="background:var(--bg); padding:14px; border-radius:8px; border:1px solid var(--border);">
+            <div style="font-size:12px; color:var(--muted);">{{ t("admin.backup_members") }}</div>
+            <div style="font-size:20px; font-weight:700; color:var(--text); margin-top:4px;">{{ cnt_members }}</div>
+        </div>
+        <div style="background:var(--bg); padding:14px; border-radius:8px; border:1px solid var(--border);">
+            <div style="font-size:12px; color:var(--muted);">{{ t("admin.backup_posts") }}</div>
+            <div style="font-size:20px; font-weight:700; color:var(--text); margin-top:4px;">{{ cnt_posts }}</div>
+        </div>
+        <div style="background:var(--bg); padding:14px; border-radius:8px; border:1px solid var(--border);">
+            <div style="font-size:12px; color:var(--muted);">{{ t("admin.backup_comments_files") }}</div>
+            <div style="font-size:20px; font-weight:700; color:var(--text); margin-top:4px;">{{ cnt_comments }} / {{ cnt_files }}</div>
+        </div>
+    </div>
+
+    <a href="/admin/backup/download" class="btn btn-primary" style="padding:11px 20px; font-size:14px;">
+        <i class="fas fa-download"></i> {{ t("admin.backup_download_btn") }}
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,165 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+    <h1 style="margin:0;">🗑️ {{ t("admin.trash_title") }}</h1>
+    {% if deleted_posts or deleted_comments %}
+    <form action="/admin/trash/empty" method="post" onsubmit="return confirm('휴지통의 모든 게시글, 댓글 및 연결된 첨부파일을 영구 삭제하시겠습니까? 복구할 수 없습니다.');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="btn" style="background:#ef4444; border-color:#ef4444; color:#fff;"><i class="fas fa-fire"></i> {{ t("admin.trash_empty_btn") }}</button>
+    </form>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+        <h3 style="margin:0;">{{ t("admin.trash_deleted_posts") }} ({{ deleted_posts | length }})</h3>
+        {% if deleted_posts %}
+        <div style="display:flex; gap:8px;">
+            <form id="bulk-post-restore-form" action="/admin/trash/post/bulk-restore" method="post" style="display:none;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="ids_csv" value="">
+            </form>
+            <form id="bulk-post-purge-form" action="/admin/trash/post/bulk-purge" method="post" style="display:none;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="ids_csv" value="">
+            </form>
+            <button type="button" class="btn btn-primary" onclick="rbSubmitBulk('bulk-post-restore-form', 'chk-trash-post', '선택한 {n}건의 게시글을 복원하시겠습니까?')">
+                <i class="fas fa-rotate-left"></i> {{ t("admin.trash_restore_sel") }}
+            </button>
+            <button type="button" class="btn" style="background:#dc2626; border-color:#dc2626; color:#fff;" onclick="rbSubmitBulk('bulk-post-purge-form', 'chk-trash-post', '선택한 {n}건의 게시글과 첨부파일을 영구 삭제하시겠습니까?')">
+                <i class="fas fa-trash"></i> {{ t("admin.trash_purge_sel") }}
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width:36px;"><input type="checkbox" onclick="rbToggleAll(this, 'chk-trash-post')" title="전체 선택"></th>
+                <th>ID</th>
+                <th>{{ t("admin.trash_col_board") }}</th>
+                <th>{{ t("admin.trash_col_title") }}</th>
+                <th>{{ t("admin.trash_col_author") }}</th>
+                <th>{{ t("admin.trash_col_date") }}</th>
+                <th style="text-align:right;">{{ t("admin.boards_col_manage") }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in deleted_posts %}
+            <tr>
+                <td><input type="checkbox" class="chk-trash-post" value="{{ p.id }}"></td>
+                <td>#{{ p.id }}</td>
+                <td><code>{{ p.bo_table }}</code></td>
+                <td>{{ p.wr_subject }}</td>
+                <td>{{ p.wr_name }}</td>
+                <td style="font-size:12px; color:var(--muted);">{{ p.deleted_at }}</td>
+                <td style="text-align:right;">
+                    <div style="display:inline-flex; gap:6px;">
+                        <form action="/admin/trash/post/restore" method="post">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="id" value="{{ p.id }}">
+                            <button type="submit" class="btn btn-primary" style="padding:4px 10px; font-size:12px;"><i class="fas fa-rotate-left"></i> {{ t("admin.trash_restore") }}</button>
+                        </form>
+                        <form action="/admin/trash/post/purge" method="post" onsubmit="return confirm('Purge permanently?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="id" value="{{ p.id }}">
+                            <button type="submit" class="btn" style="padding:4px 10px; font-size:12px; background:#dc2626; border-color:#dc2626; color:#fff;"><i class="fas fa-xmark"></i> {{ t("admin.trash_purge") }}</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center; color:var(--muted); padding:24px;">{{ t("admin.trash_empty_posts") }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+        <h3 style="margin:0;">{{ t("admin.trash_deleted_comments") }} ({{ deleted_comments | length }})</h3>
+        {% if deleted_comments %}
+        <div style="display:flex; gap:8px;">
+            <form id="bulk-comment-restore-form" action="/admin/trash/comment/bulk-restore" method="post" style="display:none;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="ids_csv" value="">
+            </form>
+            <form id="bulk-comment-purge-form" action="/admin/trash/comment/bulk-purge" method="post" style="display:none;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="ids_csv" value="">
+            </form>
+            <button type="button" class="btn btn-primary" onclick="rbSubmitBulk('bulk-comment-restore-form', 'chk-trash-comment')">
+                <i class="fas fa-rotate-left"></i> {{ t("admin.trash_restore_sel") }}
+            </button>
+            <button type="button" class="btn" style="background:#dc2626; border-color:#dc2626; color:#fff;" onclick="rbSubmitBulk('bulk-comment-purge-form', 'chk-trash-comment', 'Purge {n} selected items?')">
+                <i class="fas fa-trash"></i> {{ t("admin.trash_purge_sel") }}
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width:36px;"><input type="checkbox" onclick="rbToggleAll(this, 'chk-trash-comment')"></th>
+                <th>ID</th>
+                <th>{{ t("admin.trash_col_post_id") }}</th>
+                <th>{{ t("admin.trash_col_author") }}</th>
+                <th>{{ t("admin.trash_col_content") }}</th>
+                <th>{{ t("admin.trash_col_date") }}</th>
+                <th style="text-align:right;">{{ t("admin.boards_col_manage") }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in deleted_comments %}
+            <tr>
+                <td><input type="checkbox" class="chk-trash-comment" value="{{ c.id }}"></td>
+                <td>#{{ c.id }}</td>
+                <td>#{{ c.post_id }}</td>
+                <td>{{ c.co_name }}</td>
+                <td style="max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ c.co_content }}</td>
+                <td style="font-size:12px; color:var(--muted);">{{ c.deleted_at }}</td>
+                <td style="text-align:right;">
+                    <div style="display:inline-flex; gap:6px;">
+                        <form action="/admin/trash/comment/restore" method="post">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="id" value="{{ c.id }}">
+                            <button type="submit" class="btn btn-primary" style="padding:4px 10px; font-size:12px;">{{ t("admin.trash_restore") }}</button>
+                        </form>
+                        <form action="/admin/trash/comment/purge" method="post" onsubmit="return confirm('Purge permanently?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="id" value="{{ c.id }}">
+                            <button type="submit" class="btn" style="padding:4px 10px; font-size:12px; background:#dc2626; border-color:#dc2626; color:#fff;">{{ t("admin.trash_purge") }}</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center; color:var(--muted); padding:24px;">{{ t("admin.trash_empty_comments") }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function rbToggleAll(master, cls) {
+    document.querySelectorAll('.' + cls).forEach(function(cb) {
+        if (!cb.disabled) cb.checked = master.checked;
+    });
+}
+function rbSubmitBulk(formId, cls, confirmMsg) {
+    var ids = Array.from(document.querySelectorAll('.' + cls + ':checked')).map(function(c) { return c.value; });
+    if (ids.length === 0) {
+        alert('선택된 항목이 없습니다.');
+        return false;
+    }
+    if (confirmMsg && !confirm(confirmMsg.replace('{n}', ids.length))) {
+        return false;
+    }
+    var form = document.getElementById(formId);
+    form.querySelector('input[name="ids_csv"]').value = ids.join(',');
+    form.submit();
+    return true;
+}
+</script>
+{% endblock %}

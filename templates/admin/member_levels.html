@@ -1,0 +1,39 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<h1 style="margin:0 0 8px;">🏅 {{ t("admin.levels_title") }}</h1>
+<p style="color:var(--muted); margin:0 0 20px;">{{ t("admin.levels_desc") }}</p>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>{{ t("admin.levels_col_lv") }}</th>
+                <th>{{ t("admin.levels_col_name") }}</th>
+                <th>{{ t("admin.levels_col_icon") }}</th>
+                <th>{{ t("admin.levels_col_pt") }}</th>
+                <th>{{ t("admin.levels_col_post") }}</th>
+                <th>{{ t("admin.levels_col_cmt") }}</th>
+                <th>{{ t("admin.levels_col_save") }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lv in levels %}
+            <tr>
+                <form action="/admin/member-levels/update" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="level" value="{{ lv.level }}">
+                    <td><strong>Lv.{{ lv.level }}</strong></td>
+                    <td><input type="text" name="level_name" value="{{ lv.level_name }}" class="input" style="width:130px;"></td>
+                    <td><input type="text" name="badge_icon" value="{{ lv.badge_icon | default('') }}" class="input" style="width:140px;"></td>
+                    <td><input type="number" name="req_point" value="{{ lv.req_point }}" class="input" style="width:90px;"></td>
+                    <td><input type="number" name="req_posts" value="{{ lv.req_posts }}" class="input" style="width:80px;"></td>
+                    <td><input type="number" name="req_comments" value="{{ lv.req_comments }}" class="input" style="width:80px;"></td>
+                    <td><button type="submit" class="btn btn-primary">{{ t("admin.levels_col_save") }}</button></td>
+                </form>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

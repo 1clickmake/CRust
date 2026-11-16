@@ -1,0 +1,101 @@
+{% extends layout_tpl %}
+
+{% block content %}
+<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:18px;">
+        <div>
+            <h2 style="margin:0;"><i class="fas fa-images" style="color:var(--primary);"></i> {{ board.bo_subject }}</h2>
+            <span style="font-size:13px; color:var(--muted);">{{ t("board.total_posts_prefix") }} {{ total_count }} {{ t("board.total_posts_suffix") }}</span>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <form action="/board/{{ board.bo_table }}" method="get" style="display:flex; gap:6px;">
+                <input type="text" name="q" value="{{ search_q }}" class="input" placeholder="{{ t('board.search_fts') }}" style="width:200px;">
+                <button type="submit" class="btn"><i class="fas fa-search"></i></button>
+            </form>
+            {% if current_user and current_user.mb_level >= 10 and posts %}
+            <form id="bulk-board-delete-form" action="/board/{{ board.bo_table }}/bulk-delete" method="post" style="display:none;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="ids_csv" value="">
+            </form>
+            <button type="button" class="btn btn-danger" onclick="rbSubmitBulk('bulk-board-delete-form', 'chk-board-post', 'Delete {n} selected posts?')">
+                <i class="fas fa-trash"></i> {{ t("board.bulk_delete") }}
+            </button>
+            {% endif %}
+            <a href="/board/{{ board.bo_table }}/write" class="btn btn-primary"><i class="fas fa-pen"></i> {{ t("common.write") }}</a>
+        </div>
+    </div>
+
+    {% if categories %}
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+        <a href="/board/{{ board.bo_table }}" class="btn {% if not current_category %}btn-primary{% endif %}" style="padding:4px 12px; font-size:13px;">{{ t("board.all") }}</a>
+        {% for cat in categories %}
+        <a href="/board/{{ board.bo_table }}?category={{ cat }}" class="btn {% if current_category == cat %}btn-primary{% endif %}" style="padding:4px 12px; font-size:13px;">{{ cat }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if posts %}
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap:16px;">
+        {% for p in posts %}
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; display:flex; flex-direction:column; position:relative;">
+            {% if current_user and current_user.mb_level >= 10 %}
+            <input type="checkbox" class="chk-board-post" value="{{ p.id }}" style="position:absolute; top:10px; left:10px; z-index:5; width:18px; height:18px;">
+            {% endif %}
+            <a href="/board/{{ board.bo_table }}/{{ p.id }}" style="display:block; aspect-ratio:16/10; background:rgba(148,163,184,0.12); overflow:hidden; text-decoration:none;">
+                {% if p.thumb %}
+                <img src="{{ p.thumb }}" alt="{{ p.wr_subject }}" style="width:100%; height:100%; object-fit:cover; display:block;">
+                {% else %}
+                <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--muted); font-size:12px; gap:6px;">
+                    <i class="fas fa-image" style="font-size:28px; opacity:0.5;"></i>
+                    <span>{{ t("board.no_image") }}</span>
+                </div>
+                {% endif %}
+            </a>
+            <div style="padding:12px 14px; flex:1; display:flex; flex-direction:column; justify-content:space-between; gap:8px;">
+                <div>
+                    {% if p.wr_category %}<span style="font-size:11px; color:var(--primary); font-weight:600;">[{{ p.wr_category }}]</span>{% endif %}
+                    <a href="/board/{{ board.bo_table }}/{{ p.id }}" style="font-weight:700; font-size:14px; color:var(--text); text-decoration:none; display:block; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                        {% if p.is_secret == 1 %}<i class="fas fa-lock" style="color:#f59e0b; font-size:11px;"></i> {% endif %}{{ p.wr_subject }}
+                    </a>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--muted);">
+                    <span>{{ p.wr_name }}</span>
+                    <span>
+                        <i class="fas fa-eye"></i> {{ p.wr_hit }} ·
+                        <i class="fas fa-heart" style="color:#ef4444;"></i> {{ p.wr_good }}
+                        {% if p.wr_comment_count > 0 %} · <i class="fas fa-comment"></i> {{ p.wr_comment_count }}{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:48px; color:var(--muted);">{{ t("common.no_posts") }}</div>
+    {% endif %}
+
+    {% if total_pages > 1 %}
+    <div style="display:flex; justify-content:center; gap:6px; margin-top:20px;">
+        {% for i in range(1, total_pages + 1) %}
+        <a href="/board/{{ board.bo_table }}?page={{ i }}{% if search_q %}&q={{ search_q }}{% endif %}" class="btn {% if i == page %}btn-primary{% endif %}">{{ i }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function rbSubmitBulk(formId, cls, confirmMsg) {
+    var ids = Array.from(document.querySelectorAll('.' + cls + ':checked')).map(function(c) { return c.value; });
+    if (ids.length === 0) {
+        alert('선택된 항목이 없습니다.');
+        return false;
+    }
+    if (confirmMsg && !confirm(confirmMsg.replace('{n}', ids.length))) {
+        return false;
+    }
+    var form = document.getElementById(formId);
+    form.querySelector('input[name="ids_csv"]').value = ids.join(',');
+    form.submit();
+}
+</script>
+{% endblock %}

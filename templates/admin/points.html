@@ -1,0 +1,44 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<h1 style="margin:0 0 20px;">🪙 {{ t("admin.points_title") }}</h1>
+
+<div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <div style="font-size:13px; color:var(--muted);">
+        {{ t("admin.points_notice") }}
+    </div>
+    <a href="/admin/settings#points" class="btn btn-primary"><i class="fas fa-gear"></i> {{ t("admin.points_goto_cfg") }}</a>
+</div>
+
+<div class="card">
+    <h3 style="margin:0 0 14px;">{{ t("admin.points_recent") }}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>{{ t("admin.points_col_mb") }}</th>
+                <th>{{ t("admin.points_col_type") }}</th>
+                <th>{{ t("admin.points_col_desc") }}</th>
+                <th>{{ t("admin.points_col_delta") }}</th>
+                <th>{{ t("admin.points_col_bal") }}</th>
+                <th>{{ t("admin.points_col_date") }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for l in logs %}
+            <tr>
+                <td>{{ l.id }}</td>
+                <td>#{{ l.member_id }}</td>
+                <td><code>{{ l.rel_action }}</code></td>
+                <td>{{ l.content }}</td>
+                <td style="font-weight:700; color:{% if l.point >= 0 %}#34d399{% else %}#f87171{% endif %};">
+                    {% if l.point >= 0 %}+{% endif %}{{ l.point | comma }}
+                </td>
+                <td>{{ l.balance_after | comma }}</td>
+                <td>{{ l.created_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

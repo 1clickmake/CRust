@@ -1,0 +1,29 @@
+[server]
+host = "127.0.0.1"
+port = 3000
+# Set to false in production for cached templates & translations
+dev_mode = false
+
+[database]
+url = "sqlite://rust_board.db?mode=rwc"
+max_connections = 10
+
+[storage]
+driver = "local"
+upload_dir = "uploads"
+max_file_size_mb = 20
+
+# Uncomment and set driver = "s3" for S3 / Cloudflare R2 / MinIO
+# [storage.s3]
+# endpoint = "https://s3.ap-northeast-2.amazonaws.com"
+# region = "ap-northeast-2"
+# bucket = "crust-uploads"
+# access_key = ""
+# secret_key = ""
+# path_style = true
+
+[security]
+session_cookie_name = "rb_session"
+session_ttl_hours = 168
+# Set to true when serving over HTTPS
+cookie_secure = false

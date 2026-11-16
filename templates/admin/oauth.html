@@ -1,0 +1,59 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div style="margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;"><i class="fas fa-key" style="color:var(--accent);"></i> {{ t("oauth.admin_title") }}</h1>
+    <p style="margin:0; font-size:13px; color:var(--muted);">{{ t("oauth.admin_desc") }}</p>
+</div>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:18px;">
+    {% for p in providers %}
+    <div class="card" style="margin-bottom:0;">
+        <form action="/admin/oauth/save" method="post" style="display:flex; flex-direction:column; gap:12px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="provider" value="{{ p.provider }}">
+
+            <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:10px; border-bottom:1px solid var(--border);">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <strong style="font-size:16px;">{{ p.display_name }}</strong>
+                    <code style="font-size:11px; color:var(--muted);">{{ p.provider }}</code>
+                </div>
+                <label style="display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600; cursor:pointer;">
+                    <input type="checkbox" name="is_enabled" value="1" {% if p.is_enabled == 1 %}checked{% endif %} style="width:16px; height:16px; accent-color:var(--accent);">
+                    {{ t("oauth.enabled") }}
+                </label>
+            </div>
+
+            <div style="font-size:12px; background:var(--input-bg); padding:8px 10px; border-radius:6px; border:1px solid var(--border);">
+                <span style="color:var(--muted); display:block; margin-bottom:2px;">{{ t("oauth.callback_url") }}</span>
+                <code style="word-break:break-all; color:var(--accent);">{{ site_origin }}/auth/oauth/{{ p.provider }}/callback</code>
+            </div>
+
+            <div>
+                <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">{{ t("oauth.client_id") }}</label>
+                <input type="text" name="client_id" value="{{ p.client_id }}" class="input" style="width:100%; box-sizing:border-box;">
+            </div>
+
+            <div>
+                <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">{{ t("oauth.client_secret") }}</label>
+                <input type="password" name="client_secret" value="{{ p.client_secret }}" class="input" style="width:100%; box-sizing:border-box;" autocomplete="new-password">
+            </div>
+
+            <div>
+                <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">{{ t("oauth.scopes") }}</label>
+                <input type="text" name="scopes" value="{{ p.scopes }}" class="input" style="width:100%; box-sizing:border-box;">
+            </div>
+
+            <div>
+                <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">{{ t("oauth.extra_config") }}</label>
+                <textarea name="extra_config" rows="3" class="input" style="width:100%; box-sizing:border-box; font-family:monospace; font-size:12px;" placeholder='{% if p.provider == "apple" %}{"team_id":"","key_id":"","private_key_p8":""}{% else %}{}{% endif %}'>{{ p.extra_config }}</textarea>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end;">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-floppy-disk"></i> {{ t("oauth.save_btn") }}</button>
+            </div>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

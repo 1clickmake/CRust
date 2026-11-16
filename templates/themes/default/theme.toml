@@ -1,0 +1,5 @@
+name = "Default Light"
+slug = "default"
+version = "1.0.0"
+author = "Asamiya"
+description = "깔끔하고 화사한 기본 커뮤니티 디자인 테마 (모든 테마의 기본 Fallback 기준)"

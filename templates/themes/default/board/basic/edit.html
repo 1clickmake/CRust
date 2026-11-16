@@ -1,0 +1,100 @@
+{% extends layout_tpl %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/editor/asamiya/asamiya-editor.css">
+<script src="/static/editor/asamiya/asamiya-editor.js"></script>
+<script src="/static/js/editor-draft.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div id="rb-draft-banner" style="display:none; justify-content:space-between; align-items:center; gap:10px; padding:10px 14px; margin-bottom:14px; border-radius:8px; border:1px solid var(--primary); background:rgba(99,102,241,0.08); font-size:13px;"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:0 0 20px;">
+        <h2 style="margin:0;"><i class="fas fa-pen"></i> {{ board.bo_subject }} - {{ t("board.edit_post") }}</h2>
+        <span id="rb-draft-status" style="font-size:12px; color:var(--muted);"></span>
+    </div>
+    <form action="/board/{{ board.bo_table }}/{{ post.id }}/edit" method="post" onsubmit="return handlePostSubmit();" style="display:flex; flex-direction:column; gap:14px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            {% if categories %}
+            <div style="width:160px;">
+                <select name="wr_category">
+                    <option value="">{{ t("board.select_cat") }}</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if post.wr_category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            {% if need_guest_password %}
+            <div style="width:200px;">
+                <input type="password" name="wr_password" class="input" placeholder="{{ t('board.edit_pw') }}" required>
+            </div>
+            {% endif %}
+            <div style="flex:1; min-width:220px;">
+                <input type="text" name="wr_subject" class="input" value="{{ post.wr_subject }}" placeholder="{{ t('board.subject_ph') }}" required>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:16px; align-items:center; font-size:13px;">
+            {% if current_user and current_user.mb_level >= 10 %}
+            <label><input type="checkbox" name="is_notice" value="1" {% if post.is_notice != 0 %}checked{% endif %}> {{ t("board.set_notice") }}</label>
+            {% endif %}
+            <label><input type="checkbox" name="is_secret" value="1" {% if post.is_secret != 0 %}checked{% endif %}> {{ t("board.set_secret") }}</label>
+            <span style="color:var(--muted);">{{ t("board.editor_hint") }}</span>
+        </div>
+
+        <textarea id="wr_content" name="wr_content" style="display:none;">{{ post.wr_content }}</textarea>
+        <div id="asamiya-container-wr_content"></div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <input type="url" name="wr_link1" class="input" value="{{ post.wr_link1 or '' }}" placeholder="{{ t('board.link1_ph') }}">
+            <input type="url" name="wr_link2" class="input" value="{{ post.wr_link2 or '' }}" placeholder="{{ t('board.link2_ph') }}">
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+            <a href="/board/{{ board.bo_table }}/{{ post.id }}" class="btn">{{ t("common.cancel") }}</a>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> {{ t("board.submit_edit") }}</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    var asamiyaEditorUploadUrl = "/api/editor/upload";
+    var asamiyaEditorFileUploadUrl = "/api/editor/file-upload";
+    var asamiyaCsrfToken = "{{ csrf_token }}";
+    var asamiyaEditors = {};
+
+    document.addEventListener("DOMContentLoaded", function() {
+        var initialHtml = document.getElementById("wr_content").value || "";
+        asamiyaEditors["wr_content"] = new AsamiyaEditor("#asamiya-container-wr_content", {
+            placeholder: "여기에 내용을 입력하거나 이미지/파일을 드래그해서 놓아보세요...",
+            height: "420px"
+        });
+        asamiyaEditors["wr_content"].setHTML(initialHtml);
+        if (window.initCRustDraft) {
+            window.initCRustDraft({
+                storageKey: "crust_draft_edit_{{ board.bo_table }}_{{ post.id }}",
+                getHtml: function() { return asamiyaEditors["wr_content"].getHTML(); },
+                setHtml: function(h) { asamiyaEditors["wr_content"].setHTML(h); },
+                foundMsg: "{{ t('draft.found') }}",
+                restoreLabel: "{{ t('draft.restore') }}",
+                discardLabel: "{{ t('draft.discard') }}",
+                savedLabel: "{{ t('draft.saved') }}"
+            });
+        }
+    });
+
+    function handlePostSubmit() {
+        var html = asamiyaEditors["wr_content"].getHTML();
+        if (!html || html === "<p><br></p>" || html === "<br>") {
+            alert("본문 내용을 입력해 주세요.");
+            return false;
+        }
+        document.getElementById("wr_content").value = html;
+        if (window.clearCRustDraft) window.clearCRustDraft();
+        return true;
+    }
+</script>
+{% endblock %}

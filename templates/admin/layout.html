@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang | default('ko') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t("admin.brand") }} - {{ site_title }}</title>
+    <script>
+        (function() {
+            var saved = localStorage.getItem('rb_theme_mode') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root, [data-theme="dark"] {
+            --bg: #0f172a;
+            --sidebar: #111827;
+            --sidebar-border: #1e293b;
+            --surface: #1e293b;
+            --border: #334155;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-text: #0f172a;
+            --nav-text: #cbd5e1;
+            --nav-hover: #1e293b;
+            --input-bg: #0f172a;
+            --btn-bg: #334155;
+            --btn-border: #475569;
+            --btn-text: #ffffff;
+        }
+        [data-theme="light"] {
+            --bg: #f1f5f9;
+            --sidebar: #ffffff;
+            --sidebar-border: #e2e8f0;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --muted: #64748b;
+            --accent: #0284c7;
+            --accent-text: #ffffff;
+            --nav-text: #334155;
+            --nav-hover: #f1f5f9;
+            --input-bg: #ffffff;
+            --btn-bg: #f8fafc;
+            --btn-border: #cbd5e1;
+            --btn-text: #0f172a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            min-height: 100vh;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            background: var(--sidebar);
+            border-right: 1px solid var(--sidebar-border);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        .sidebar .brand {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 12px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .admin-controls {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 14px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--sidebar-border);
+        }
+        .sidebar a.nav {
+            color: var(--nav-text);
+            text-decoration: none;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+        .sidebar a.nav:hover {
+            background: var(--nav-hover);
+            color: var(--accent);
+        }
+        .main-wrap {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .admin-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: var(--sidebar);
+            border-bottom: 1px solid var(--sidebar-border);
+            padding: 12px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        .admin-topbar-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .admin-topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .main { flex: 1; padding: 28px 32px; }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 20px;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 7px;
+            border: 1px solid var(--btn-border);
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+        .input, select, textarea {
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--btn-border);
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 13px;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+        th { color: var(--muted); }
+    </style>
+</head>
+<body>
+<aside class="sidebar">
+    <a href="/admin" class="brand"><i class="fas fa-shield-halved"></i> {{ t("admin.brand") }}</a>
+
+    <div class="admin-controls">
+        <select aria-label="{{ t('common.language') }}" style="flex:1; padding:6px 8px; font-size:12px;" onchange="if(this.value) window.location.href='/lang/' + this.value;">
+            {% for lang in supported_langs %}
+            <option value="{{ lang.code }}" {% if lang.code == current_lang %}selected{% endif %}>{{ lang.flag }} {{ lang.label }}</option>
+            {% endfor %}
+        </select>
+        <button type="button" class="btn" style="padding:6px 10px;" title="{{ t('common.toggle_theme') }}" onclick="rbAdminToggleTheme()">
+            <i id="rb-admin-theme-icon" class="fas fa-sun"></i>
+        </button>
+    </div>
+
+    <a href="/admin" class="nav"><i class="fas fa-chart-line"></i> {{ t("admin.nav_dashboard") }}</a>
+    <a href="/admin/settings" class="nav"><i class="fas fa-gear"></i> {{ t("admin.nav_settings") }}</a>
+    <a href="/admin/oauth" class="nav"><i class="fas fa-key"></i> {{ t("admin.nav_oauth") }}</a>
+    <a href="/admin/themes" class="nav"><i class="fas fa-palette"></i> {{ t("admin.nav_themes") }}</a>
+    <a href="/admin/members" class="nav"><i class="fas fa-users"></i> {{ t("admin.nav_members") }}</a>
+    <a href="/admin/member-levels" class="nav"><i class="fas fa-ranking-star"></i> {{ t("admin.nav_levels") }}</a>
+    <a href="/admin/boards" class="nav"><i class="fas fa-table-list"></i> {{ t("admin.nav_boards") }}</a>
+    <a href="/admin/files" class="nav"><i class="fas fa-folder-open"></i> {{ t("admin.nav_files") }}</a>
+    <a href="/admin/points" class="nav"><i class="fas fa-coins"></i> {{ t("admin.nav_points") }}</a>
+    <a href="/admin/reports" class="nav"><i class="fas fa-flag"></i> {{ t("admin.nav_reports") }}</a>
+    <a href="/admin/trash" class="nav"><i class="fas fa-trash-can"></i> {{ t("admin.nav_trash") }}</a>
+    <a href="/admin/backup" class="nav"><i class="fas fa-database"></i> {{ t("admin.nav_backup") }}</a>
+    <a href="/admin/ai-settings" class="nav"><i class="fas fa-robot"></i> {{ t("admin.nav_ai_settings") }}</a>
+    <a href="/admin/ai-builder" class="nav"><i class="fas fa-wand-magic-sparkles"></i> {{ t("admin.nav_ai_builder") }}</a>
+    <hr style="border:0; border-top:1px solid var(--sidebar-border); margin:16px 0;">
+    <a href="/" class="nav" style="color:var(--accent);"><i class="fas fa-arrow-up-right-from-square"></i> {{ t("common.back_to_site") }}</a>
+</aside>
+<div class="main-wrap">
+    <header class="admin-topbar">
+        <div class="admin-topbar-title">
+            <i class="fas fa-shield-halved" style="color:var(--accent);"></i>
+            <span>{{ site_title }} · {{ t("admin.brand") }}</span>
+        </div>
+        <div class="admin-topbar-actions">
+            <a href="/" class="btn" style="color:var(--accent);">
+                <i class="fas fa-arrow-up-right-from-square"></i> {{ t("common.back_to_site") }}
+            </a>
+            <form method="post" action="/member/logout" style="margin:0;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token | default('') }}">
+                <button type="submit" class="btn">
+                    <i class="fas fa-right-from-bracket"></i> {{ t("common.logout") }}
+                </button>
+            </form>
+        </div>
+    </header>
+    <main class="main">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+<script>
+    function rbAdminSyncIcon() {
+        var mode = document.documentElement.getAttribute('data-theme') || 'dark';
+        var icon = document.getElementById('rb-admin-theme-icon');
+        if (icon) {
+            icon.className = mode === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            icon.style.color = mode === 'dark' ? '#fbbf24' : '#475569';
+        }
+    }
+    function rbAdminToggleTheme() {
+        var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+        var next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('rb_theme_mode', next);
+        rbAdminSyncIcon();
+    }
+    document.addEventListener('DOMContentLoaded', rbAdminSyncIcon);
+</script>
+</body>
+</html>

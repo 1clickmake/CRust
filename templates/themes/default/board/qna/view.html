@@ -1,0 +1,200 @@
+{% extends layout_tpl %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/editor/asamiya/asamiya-editor.css">
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="border-bottom:1px solid var(--border); padding-bottom:16px; margin-bottom:20px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+            <span style="font-size:13px; color:var(--muted);">
+                <a href="/board/{{ board.bo_table }}">{{ board.bo_subject }}</a>
+                {% if post.wr_category %} · {{ post.wr_category }}{% endif %}
+            </span>
+            {% if post_extra and post_extra.qna_solved %}
+            <span style="padding:3px 10px; border-radius:999px; background:rgba(16,185,129,0.16); color:#10b981; font-size:12px; font-weight:700;">
+                <i class="fas fa-circle-check"></i> {{ t("board.qna_solved") }}
+            </span>
+            {% else %}
+            <span style="padding:3px 10px; border-radius:999px; background:rgba(245,158,11,0.16); color:#f59e0b; font-size:12px; font-weight:700;">
+                <i class="fas fa-hourglass-half"></i> {{ t("board.qna_waiting") }}
+            </span>
+            {% endif %}
+        </div>
+        <h1 style="margin:0 0 10px; font-size:24px;">{{ post.wr_subject }}</h1>
+        <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:13px; color:var(--muted);">
+            <div>
+                {{ t("board.author") }}: <strong>{{ post.wr_name }}</strong> ·
+                {{ t("board.date") }}: {{ post.created_at }} ·
+                {{ t("board.views") }}: {{ post.wr_hit }}
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <a href="/board/{{ board.bo_table }}" class="btn" style="padding:4px 12px; font-size:13px;">{{ t("common.list") }}</a>
+                {% if can_edit %}
+                <a href="/board/{{ board.bo_table }}/{{ post.id }}/edit" class="btn" style="padding:4px 12px; font-size:13px;">{{ t("common.edit") }}</a>
+                {% endif %}
+                {% if can_delete %}
+                <form action="/board/{{ board.bo_table }}/{{ post.id }}/delete" method="post" style="display:flex; gap:6px; align-items:center;" onsubmit="return confirm('Delete this post?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    {% if is_guest_post %}
+                    <input type="password" name="wr_password" class="input" placeholder="{{ t('board.delete_pw') }}" style="width:130px; padding:4px 8px; font-size:12px;" required>
+                    {% endif %}
+                    <button type="submit" class="btn btn-danger" style="padding:4px 12px; font-size:13px;">{{ t("common.delete") }}</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="asamiya-content" style="padding:10px 0; min-height:120px;">
+        {{ post.wr_content | safe }}
+    </div>
+
+    <div style="display:flex; justify-content:center; gap:12px; margin-top:28px; padding-top:20px; border-top:1px solid var(--border);">
+        <button type="button" class="btn" onclick="votePost('good')">
+            <i class="fas fa-thumbs-up" style="color:#3b82f6;"></i> {{ t("board.likes") }} <strong id="good-cnt">{{ post.wr_good }}</strong>
+        </button>
+        <button type="button" class="btn" onclick="votePost('nogood')">
+            <i class="fas fa-thumbs-down" style="color:#ef4444;"></i> {{ t("board.dislike") }} <strong id="nogood-cnt">{{ post.wr_nogood }}</strong>
+        </button>
+        {% if current_user %}
+        <button type="button" class="btn" onclick="rbReportTarget('post', {{ post.id }})" style="color:#f59e0b;">
+            <i class="fas fa-flag"></i> {{ t("report.btn") }}
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <h3 style="margin:0 0 16px;"><i class="fas fa-comments"></i> {{ t("board.comments") }} ({{ comments | length }})</h3>
+    {% for c in comments %}
+    {% set is_accepted = post_extra and post_extra.accepted_comment_id == c.id %}
+    <div id="comment-{{ c.id }}" style="padding:14px; margin-bottom:10px; border-radius:10px; border:1px solid {% if is_accepted %}#10b981{% else %}var(--border){% endif %}; background:{% if is_accepted %}rgba(16,185,129,0.06){% else %}transparent{% endif %}; {% if c.depth > 0 %}margin-left:{{ c.depth * 24 }}px;{% endif %}">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; font-size:13px; margin-bottom:6px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                {% if c.depth > 0 %}<i class="fas fa-reply fa-rotate-180" style="color:var(--primary); font-size:11px;"></i>{% endif %}
+                <strong>{{ c.co_name }}</strong>
+                {% if is_accepted %}
+                <span style="padding:2px 8px; border-radius:999px; background:#10b981; color:#fff; font-size:11px; font-weight:700;">
+                    <i class="fas fa-check"></i> {{ t("board.qna_accepted_badge") }}
+                </span>
+                {% endif %}
+                {% if c.is_secret == 1 %}<span style="font-size:11px; color:#f59e0b;"><i class="fas fa-lock"></i> {{ t("board.secret_comment") }}</span>{% endif %}
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; color:var(--muted); font-size:12px;">
+                <span>{{ c.created_at }}</span>
+                {% if current_user and (not post_extra or not post_extra.qna_solved) and c.depth == 0 and (current_user.mb_level >= 10 or post.member_id == current_user.id) %}
+                <form action="/board/{{ board.bo_table }}/{{ post.id }}/qna-accept/{{ c.id }}" method="post" style="margin:0;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="btn btn-primary" style="padding:2px 10px; font-size:11px; background:#10b981; border-color:#10b981;">
+                        <i class="fas fa-check"></i> {{ t("board.qna_accept_btn") }}
+                    </button>
+                </form>
+                {% endif %}
+                <button type="button" class="btn" style="padding:2px 8px; font-size:11px;" onclick="rbSetReply({{ c.id }}, '{{ c.co_name | replace("'", "\\'") }}')">
+                    <i class="fas fa-reply"></i> {{ t("board.reply") }}
+                </button>
+                {% if current_user %}
+                <button type="button" class="btn" style="padding:2px 8px; font-size:11px; color:#f59e0b;" onclick="rbReportTarget('comment', {{ c.id }})" title="{{ t('report.btn') }}">
+                    <i class="fas fa-flag"></i>
+                </button>
+                {% endif %}
+                {% if c.can_manage %}
+                <button type="button" class="btn" style="padding:2px 8px; font-size:11px;" onclick="rbToggleCommentEdit({{ c.id }})">
+                    <i class="fas fa-pen"></i> {{ t("board.comment_edit") }}
+                </button>
+                <form action="/board/{{ board.bo_table }}/{{ post.id }}/comment/{{ c.id }}/delete" method="post" style="display:inline-flex; gap:4px; align-items:center; margin:0;" onsubmit="return confirm('{{ t("board.confirm_delete_comment") }}');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="btn btn-danger" style="padding:2px 8px; font-size:11px;">{{ t("board.comment_delete") }}</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% if c.can_view_secret %}
+        <div id="comment-body-{{ c.id }}" style="font-size:14px; white-space:pre-wrap; word-break:break-word;">{{ c.co_content }}</div>
+        {% else %}
+        <div style="font-size:13px; color:var(--muted); font-style:italic;"><i class="fas fa-lock"></i> {{ t("board.secret_comment_hidden") }}</div>
+        {% endif %}
+        {% if c.can_manage %}
+        <form id="comment-edit-{{ c.id }}" action="/board/{{ board.bo_table }}/{{ post.id }}/comment/{{ c.id }}/edit" method="post" style="display:none; margin-top:10px; gap:8px; flex-direction:column;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <textarea name="co_content" class="plain-textarea" rows="2" required>{{ c.co_content }}</textarea>
+            <div style="display:flex; justify-content:flex-end; gap:6px;">
+                <button type="button" class="btn" style="padding:4px 10px; font-size:12px;" onclick="rbToggleCommentEdit({{ c.id }})">{{ t("board.cancel") }}</button>
+                <button type="submit" class="btn btn-primary" style="padding:4px 12px; font-size:12px;">{{ t("board.save_edit") }}</button>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+    {% else %}
+    <p style="color:var(--muted); font-size:14px;">{{ t("board.no_comments") }}</p>
+    {% endfor %}
+
+    <form id="rb-comment-form" action="/board/{{ board.bo_table }}/{{ post.id }}/comment" method="post" style="margin-top:20px; display:flex; flex-direction:column; gap:10px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" id="rb-comment-parent-id" name="parent_id" value="">
+        <div id="rb-reply-banner" style="display:none; padding:8px 12px; border-radius:8px; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); font-size:13px; justify-content:space-between; align-items:center;">
+            <span><i class="fas fa-reply" style="color:var(--primary);"></i> {{ t("board.replying_to") }}: <strong id="rb-reply-target"></strong></span>
+            <button type="button" class="btn" style="padding:2px 8px; font-size:11px;" onclick="rbCancelReply()">{{ t("board.cancel_reply") }}</button>
+        </div>
+        {% if not current_user %}
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <input type="text" name="co_name" class="input" placeholder="{{ t('board.guest_name') }}" style="max-width:200px;" required>
+            <input type="password" name="co_password" class="input" placeholder="{{ t('board.comment_pw') }}" style="max-width:200px;">
+        </div>
+        {% endif %}
+        <textarea id="rb-comment-textarea" name="co_content" class="plain-textarea" rows="3" placeholder="{{ t('board.comment_placeholder') }}" required></textarea>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label style="font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" name="is_secret" value="1"> <i class="fas fa-lock" style="color:#f59e0b;"></i> {{ t("board.secret_comment") }}
+            </label>
+            <button type="submit" class="btn btn-primary">{{ t("board.comment_submit") }}</button>
+        </div>
+    </form>
+</div>
+
+<script>
+function rbSetReply(parentId, authorName) {
+    document.getElementById('rb-comment-parent-id').value = parentId;
+    document.getElementById('rb-reply-target').textContent = authorName;
+    document.getElementById('rb-reply-banner').style.display = 'flex';
+    document.getElementById('rb-comment-textarea').focus();
+}
+function rbCancelReply() {
+    document.getElementById('rb-comment-parent-id').value = '';
+    document.getElementById('rb-reply-banner').style.display = 'none';
+}
+function rbToggleCommentEdit(id) {
+    var form = document.getElementById('comment-edit-' + id);
+    var body = document.getElementById('comment-body-' + id);
+    if (!form) return;
+    var show = form.style.display === 'none' || !form.style.display;
+    form.style.display = show ? 'flex' : 'none';
+    if (body) body.style.display = show ? 'none' : 'block';
+}
+async function votePost(voteType) {
+    const res = await fetch('/api/board/{{ board.bo_table }}/{{ post.id }}/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '{{ csrf_token }}' },
+        body: JSON.stringify({ vote_type: voteType })
+    });
+    const data = await res.json();
+    if (data.error) { alert(data.error); return; }
+    document.getElementById('good-cnt').textContent = data.wr_good;
+    document.getElementById('nogood-cnt').textContent = data.wr_nogood;
+}
+async function rbReportTarget(targetType, targetId) {
+    var reason = prompt("{{ t('report.prompt') }}");
+    if (!reason || !reason.trim()) return;
+    const res = await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '{{ csrf_token }}' },
+        body: JSON.stringify({ target_type: targetType, target_id: targetId, bo_table: '{{ board.bo_table }}', reason: reason.trim() })
+    });
+    const data = await res.json();
+    if (data.error) { alert(data.error); return; }
+    alert("{{ t('report.submitted') }}");
+}
+</script>
+{% endblock %}

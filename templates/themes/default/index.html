@@ -1,0 +1,56 @@
+{% extends layout_tpl %}
+
+{% block content %}
+<div class="card" style="background: linear-gradient(135deg, rgba(79,70,229,0.12), rgba(59,130,246,0.08));">
+    <span style="display:inline-block; font-size:12px; font-weight:700; padding:3px 10px; border-radius:999px; background:var(--accent-soft); color:var(--primary); margin-bottom:8px;">
+        {{ t("home.welcome_badge") }}
+    </span>
+    <h1 style="margin:0 0 8px;">{{ site_title }} 💕</h1>
+    <p style="margin:0 0 16px; color:var(--muted);">
+        {{ t("home.hero_desc") }} · <strong>{{ t("common.active_theme") }}: {{ current_theme }}</strong>
+    </p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a href="/board/free" class="btn btn-primary"><i class="fas fa-comments"></i> {{ t("success.btn_boards") }}</a>
+        <a href="/board/notice" class="btn"><i class="fas fa-bullhorn"></i> {{ t("home.latest_notices") }}</a>
+        {% if current_user and current_user.mb_level >= 10 %}
+        <a href="/admin/themes" class="btn"><i class="fas fa-palette"></i> {{ t("admin.nav_themes") }}</a>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <h2 style="margin:0; font-size:18px;"><i class="fas fa-bullhorn"></i> {{ t("home.latest_notices") }}</h2>
+            <a href="/board/notice" style="font-size:13px;">{{ t("home.view_more") }} →</a>
+        </div>
+        {% for p in latest_notices %}
+        <div style="padding:8px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; gap:10px;">
+            <a href="/board/notice/{{ p.id }}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ p.wr_subject }}</a>
+            <span style="font-size:12px; color:var(--muted); white-space:nowrap;">{{ p.created_at[:10] }}</span>
+        </div>
+        {% else %}
+        <p style="color:var(--muted);">{{ t("common.no_posts") }}</p>
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <h2 style="margin:0; font-size:18px;"><i class="fas fa-fire"></i> {{ t("home.latest_free") }}</h2>
+            <a href="/board/free" style="font-size:13px;">{{ t("home.view_more") }} →</a>
+        </div>
+        {% for p in latest_free %}
+        <div style="padding:8px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; gap:10px;">
+            <a href="/board/free/{{ p.id }}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                {{ p.wr_subject }}
+                {% if p.wr_file_count > 0 %}<i class="fas fa-paperclip" style="font-size:12px;"></i>{% endif %}
+                {% if p.wr_comment_count > 0 %}<span style="font-size:12px; color:var(--primary);">[{{ p.wr_comment_count }}]</span>{% endif %}
+            </a>
+            <span style="font-size:12px; color:var(--muted); white-space:nowrap;">{{ p.wr_name }}</span>
+        </div>
+        {% else %}
+        <p style="color:var(--muted);">{{ t("common.no_posts") }}</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

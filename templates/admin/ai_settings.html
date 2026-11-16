@@ -1,0 +1,266 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div style="margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;"><i class="fas fa-robot" style="color:var(--accent);"></i> {{ t("ai.settings_title") }}</h1>
+    <p style="margin:0; font-size:13px; color:var(--muted);">{{ t("ai.settings_desc") }}</p>
+</div>
+
+<div id="ai-saved-banner" style="display:none; max-width:760px; margin-bottom:14px; padding:10px 14px; border-radius:8px; background:rgba(16,185,129,0.14); border:1px solid rgba(16,185,129,0.4); color:#10b981; font-size:13px; font-weight:600;">
+    <i class="fas fa-circle-check"></i> {{ t("ai.saved_notice") }}
+</div>
+
+<div class="card" id="ai-settings-card" style="max-width:760px;"
+     data-saved-provider="{{ ai_cfg.provider }}"
+     data-has-api-key="{% if has_api_key %}1{% else %}0{% endif %}"
+     data-csrf="{{ csrf_token }}"
+     data-fetching-msg="{{ t('ai.fetching_models') }}"
+     data-select-model-msg="{{ t('ai.select_fetched_model') }}"
+     data-fetched-count-msg="{{ t('ai.fetched_models_count') }}">
+    <form action="/admin/ai-settings" method="post" style="display:flex; flex-direction:column; gap:14px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div>
+                <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">{{ t("ai.provider") }}</label>
+                <select id="ai-provider-select" name="provider" class="input" style="width:100%; box-sizing:border-box;">
+                    <option value="gemini" {% if ai_cfg.provider == "gemini" %}selected{% endif %}>Google Gemini</option>
+                    <option value="openai" {% if ai_cfg.provider == "openai" %}selected{% endif %}>OpenAI</option>
+                    <option value="claude" {% if ai_cfg.provider == "claude" %}selected{% endif %}>Anthropic Claude</option>
+                    <option value="openai_compat" {% if ai_cfg.provider == "openai_compat" %}selected{% endif %}>OpenAI-Compatible (Ollama / Local)</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">{{ t("ai.model") }}</label>
+                <div style="display:flex; gap:6px;">
+                    <input type="text" id="ai-model-input" name="model" value="{{ ai_cfg.model }}" list="ai-model-datalist" class="input" style="flex:1; min-width:0; box-sizing:border-box;" required>
+                    <button type="button" id="ai-fetch-models-btn" class="btn" style="white-space:nowrap; padding:0 10px; font-size:12px;" onclick="rbFetchAiModels(false)">
+                        <i class="fas fa-rotate"></i> {{ t("ai.fetch_models") }}
+                    </button>
+                </div>
+                <datalist id="ai-model-datalist"></datalist>
+                <select id="ai-model-select" class="input" style="display:none; width:100%; box-sizing:border-box; margin-top:6px; font-size:12px;"></select>
+                <div id="ai-model-status" style="font-size:11px; color:var(--muted); margin-top:4px; min-height:14px;"></div>
+            </div>
+        </div>
+
+        <div>
+            <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">{{ t("ai.reasoning_effort") }}</label>
+            <select id="ai-reasoning-select" name="reasoning_effort" class="input" style="width:100%; box-sizing:border-box;">
+                <option value="default" {% if ai_cfg.reasoning_effort == "default" %}selected{% endif %}>{{ t("ai.effort_default") }}</option>
+                <option value="minimal" {% if ai_cfg.reasoning_effort == "minimal" %}selected{% endif %}>{{ t("ai.effort_minimal") }}</option>
+                <option value="low" {% if ai_cfg.reasoning_effort == "low" %}selected{% endif %}>{{ t("ai.effort_low") }}</option>
+                <option value="medium" {% if ai_cfg.reasoning_effort == "medium" %}selected{% endif %}>{{ t("ai.effort_medium") }}</option>
+                <option value="high" {% if ai_cfg.reasoning_effort == "high" %}selected{% endif %}>{{ t("ai.effort_high") }}</option>
+            </select>
+            <span style="font-size:11px; color:var(--muted);">{{ t("ai.reasoning_effort_hint") }}</span>
+        </div>
+
+        <div>
+            <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">
+                {{ t("ai.api_key") }} {% if has_api_key %}<span style="color:#10b981;">({{ t("ai.configured") }})</span>{% endif %}
+            </label>
+            <input type="password" id="ai-api-key-input" name="api_key" value="" class="input" style="width:100%; box-sizing:border-box;" placeholder="••••••••" autocomplete="new-password">
+            <span style="font-size:11px; color:var(--muted);">{{ t("ai.api_key_hint") }}</span>
+        </div>
+
+        <div>
+            <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">{{ t("ai.endpoint") }}</label>
+            <input type="url" id="ai-endpoint-input" name="endpoint" value="{{ ai_cfg.endpoint }}" class="input" style="width:100%; box-sizing:border-box;" placeholder="http://127.0.0.1:11434/v1/chat/completions">
+            <span style="font-size:11px; color:var(--muted);">{{ t("ai.endpoint_hint") }}</span>
+        </div>
+
+        <div>
+            <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">{{ t("ai.allowed_paths") }}</label>
+            <input type="text" name="allowed_paths" value="{{ ai_cfg.allowed_paths }}" class="input" style="width:100%; box-sizing:border-box; font-family:monospace;" required>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:end;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer; padding:10px; border:1px solid var(--border); border-radius:6px; background:var(--input-bg);">
+                <input type="checkbox" name="allow_db_config" value="1" {% if ai_cfg.allow_db_config %}checked{% endif %} style="width:16px; height:16px; accent-color:var(--accent);">
+                {{ t("ai.allow_db") }}
+            </label>
+            <div>
+                <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">{{ t("ai.max_backups") }}</label>
+                <input type="number" name="max_backups" value="{{ ai_cfg.max_backups }}" min="1" max="100" class="input" style="width:100%; box-sizing:border-box;">
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+            <a href="/admin/ai-builder" class="btn"><i class="fas fa-wand-magic-sparkles"></i> {{ t("admin.nav_ai_builder") }}</a>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-floppy-disk"></i> {{ t("ai.save_settings") }}</button>
+        </div>
+    </form>
+</div>
+
+<script>
+(function () {
+    const PROVIDER_DEFAULTS = {
+        gemini: 'gemini-2.5-flash',
+        openai: 'gpt-4o-mini',
+        claude: 'claude-3-5-sonnet-latest',
+        openai_compat: 'llama3.2'
+    };
+    const ENDPOINT_PLACEHOLDERS = {
+        gemini: 'https://generativelanguage.googleapis.com/v1beta/models/...',
+        openai: 'https://api.openai.com/v1/chat/completions',
+        claude: 'https://api.anthropic.com/v1/messages',
+        openai_compat: 'http://127.0.0.1:11434/v1/chat/completions'
+    };
+
+    const cardEl = document.getElementById('ai-settings-card');
+    const savedProvider = cardEl.dataset.savedProvider || 'gemini';
+    const hasApiKey = cardEl.dataset.hasApiKey === '1';
+    const csrfToken = cardEl.dataset.csrf || '';
+    const fetchingMsg = cardEl.dataset.fetchingMsg || 'Loading...';
+    const selectModelMsg = cardEl.dataset.selectModelMsg || '-- Select model --';
+    const fetchedCountTpl = cardEl.dataset.fetchedCountMsg || 'Loaded {count} models.';
+    const providerEl = document.getElementById('ai-provider-select');
+    const modelInput = document.getElementById('ai-model-input');
+    const modelSelect = document.getElementById('ai-model-select');
+    const modelDatalist = document.getElementById('ai-model-datalist');
+    const modelStatus = document.getElementById('ai-model-status');
+    const fetchBtn = document.getElementById('ai-fetch-models-btn');
+    const apiKeyInput = document.getElementById('ai-api-key-input');
+    const endpointInput = document.getElementById('ai-endpoint-input');
+
+    const draftModels = {};
+    let currentProvider = providerEl.value;
+    draftModels[currentProvider] = modelInput.value;
+
+    if (new URLSearchParams(window.location.search).get('saved') === '1') {
+        const banner = document.getElementById('ai-saved-banner');
+        if (banner) banner.style.display = 'block';
+    }
+
+    function updateEndpointPlaceholder(provider) {
+        if (ENDPOINT_PLACEHOLDERS[provider]) {
+            endpointInput.placeholder = ENDPOINT_PLACEHOLDERS[provider];
+        }
+    }
+
+    function clearLoadedModels() {
+        modelSelect.innerHTML = '';
+        modelSelect.style.display = 'none';
+        modelDatalist.innerHTML = '';
+        modelStatus.textContent = '';
+        modelStatus.style.color = 'var(--muted)';
+    }
+
+    modelInput.addEventListener('input', function () {
+        draftModels[providerEl.value] = modelInput.value;
+        if (modelSelect.options.length > 0) {
+            const matched = Array.from(modelSelect.options).some(o => o.value === modelInput.value);
+            modelSelect.value = matched ? modelInput.value : '';
+        }
+    });
+
+    modelSelect.addEventListener('change', function () {
+        if (modelSelect.value) {
+            modelInput.value = modelSelect.value;
+            draftModels[providerEl.value] = modelSelect.value;
+        }
+    });
+
+    providerEl.addEventListener('change', function () {
+        draftModels[currentProvider] = modelInput.value;
+        currentProvider = providerEl.value;
+        modelInput.value = draftModels[currentProvider] || PROVIDER_DEFAULTS[currentProvider] || '';
+        updateEndpointPlaceholder(currentProvider);
+        clearLoadedModels();
+
+        const canAutoFetch = apiKeyInput.value.trim() !== ''
+            || (currentProvider === savedProvider && hasApiKey)
+            || currentProvider === 'openai_compat';
+        if (canAutoFetch) {
+            window.rbFetchAiModels(true);
+        }
+    });
+
+    window.rbFetchAiModels = async function (silent) {
+        const provider = providerEl.value;
+        fetchBtn.disabled = true;
+        modelStatus.style.color = 'var(--muted)';
+        modelStatus.textContent = fetchingMsg;
+
+        try {
+            const res = await fetch('/admin/ai-settings/models', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({
+                    provider: provider,
+                    api_key: apiKeyInput.value,
+                    endpoint: endpointInput.value
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || data.error) {
+                if (silent) {
+                    modelStatus.textContent = '';
+                } else {
+                    modelStatus.style.color = '#ef4444';
+                    modelStatus.textContent = data.error || 'Failed to load models';
+                }
+                modelSelect.style.display = 'none';
+                return;
+            }
+
+            const models = Array.isArray(data.models) ? data.models : [];
+            modelDatalist.innerHTML = '';
+            modelSelect.innerHTML = '';
+
+            const placeholderOpt = document.createElement('option');
+            placeholderOpt.value = '';
+            placeholderOpt.textContent = selectModelMsg;
+            modelSelect.appendChild(placeholderOpt);
+
+            models.forEach(function (m) {
+                const dlOpt = document.createElement('option');
+                dlOpt.value = m.id;
+                modelDatalist.appendChild(dlOpt);
+
+                const selOpt = document.createElement('option');
+                selOpt.value = m.id;
+                selOpt.textContent = m.name || m.id;
+                modelSelect.appendChild(selOpt);
+            });
+
+            if (models.length > 0) {
+                modelSelect.style.display = 'block';
+                const currentVal = modelInput.value.trim();
+                const hasMatch = models.some(m => m.id === currentVal);
+                if (hasMatch) {
+                    modelSelect.value = currentVal;
+                } else if (!currentVal) {
+                    modelInput.value = models[0].id;
+                    modelSelect.value = models[0].id;
+                    draftModels[provider] = models[0].id;
+                }
+            } else {
+                modelSelect.style.display = 'none';
+            }
+
+            modelStatus.style.color = '#10b981';
+            modelStatus.textContent = fetchedCountTpl.replace('{count}', String(models.length));
+        } catch (err) {
+            if (silent) {
+                modelStatus.textContent = '';
+            } else {
+                modelStatus.style.color = '#ef4444';
+                modelStatus.textContent = String(err);
+            }
+        } finally {
+            fetchBtn.disabled = false;
+        }
+    };
+
+    updateEndpointPlaceholder(currentProvider);
+    if (hasApiKey || currentProvider === 'openai_compat') {
+        window.rbFetchAiModels(true);
+    }
+})();
+</script>
+{% endblock %}
