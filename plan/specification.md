@@ -1,14 +1,14 @@
-# Rust Board (그누보드형 모던 웹 프레임워크) 종합 설계 명세서
+# Rust Board (RUST 기반 웹 프레임워크) 종합 설계 명세서
 
 > **문서 버전:** v1.1.0 (보안·확장성·운영 안정성 및 실제 에디터 코드 검수 반영)  
-> **작성자:** 아사미야 (Asamiya) 💕  
-> **프로젝트 루트:** `c:\Users\hades\OneDrive\Desktop\작업폴더\rust_board`  
+> **작성자:** CMake 💕  
+> **프로젝트 루트:** `https://github.com/1clickmake/CRust`  
 > **기반 기술:** Rust (Axum, Tokio, SQLx/SeaORM, MiniJinja, Ammonia, Argon2), HTML5, HTMX, Asamiya-Editor  
 
 ---
 
 ## 1. 프로젝트 개요 (Overview)
-본 프로젝트는 대한민국 대표 커뮤니티 솔루션인 **그누보드5(Gnuboard5)의 핵심 구조와 사용성(게시판, 회원, 레벨, 포인트, 권한 체계, 스킨, 여분 필드)**을 현대적인 **Rust 생태계**로 재해석하여 구현하는 고성능 단일 바이너리 웹 프레임워크입니다.
+본 프로젝트는  **일반 홈페이지의 핵심 구조와 사용성(게시판, 회원, 레벨, 포인트, 권한 체계, 스킨, 여분 필드)**을 현대적인 **Rust 생태계**로 재해석하여 구현하는 고성능 단일 바이너리 웹 프레임워크입니다.
 
 ### 핵심 목표
 1. **단일 바이너리 & 제로 의존성 배포:** Nginx, PHP-FPM, 복잡한 런타임 설치 없이 실행 파일 하나로 구동 (내장 SQLite3 + FTS5 기본, PostgreSQL/MySQL 확장 가능).
@@ -263,32 +263,4 @@ rust_board/
 
 ---
 
-## 5. 단계별 개발 로드맵 (Development Roadmap)
 
-### Phase 1: 기반 인프라 & 보안 미들웨어 구축
-- [ ] `Cargo.toml` 의존성 설정 (`axum`, `tokio`, `sqlx`, `minijinja`, `ammonia`, `argon2`, `tower-http`, `uuid`, `image`)
-- [ ] `db.rs`: SQLite 3 커넥션 풀 초기화 (`WAL` 모드 및 `FOREIGN KEYS = ON` 활성화) & 스키마 자동 마이그레이션
-- [ ] `StorageBackend` 트레이트 및 `LocalStorage` 구현
-- [ ] `MiniJinja` + `ThemeResolver` (다중 테마 & `default` Fallback 지원, Dev 핫 리로딩 / Prod 캐싱) 및 `/static/`, `/theme-assets/` 서빙
-- [ ] `Asamiya-Editor` 에셋 복사 및 인라인 파일 업로드 UI 확장
-
-### Phase 2: 회원, 영속 세션, CSRF & 동적 레벨 시스템
-- [ ] `sessions` 기반 인증, Argon2id 패스워드 해싱, 차단 회원 즉시 튕겨내기 미들웨어
-- [ ] CSRF 토큰 발급 및 검증 미들웨어 (`csrf.rs`)
-- [ ] 1~10 레벨 접근 제어 Guard (`permission.rs`)
-- [ ] 원자적 1일 1회 출석 포인트 지급 & 동적 `member_level_configs` 관리
-
-### Phase 3: 원자적 포인트 & EventBus 코어
-- [ ] `point_service`: 원자적 SQL 잔액 업데이트 + `point_logs` 트랜잭션
-- [ ] `EventBus`: `PostCreated`, `CommentCreated`, `PointChanged` 비동기 이벤트 전파
-- [ ] 자동 등급업 워커 (`level_service`) & 알림 서비스 (`notification_service`)
-
-### Phase 4: 게시판, Asamiya-Editor & 스마트 파일 생명주기
-- [ ] 게시판 목록 (FTS5 trigram 검색 연동), 읽기, 쓰기/수정 뷰 구현
-- [ ] `ammonia` 커스텀 HTML Sanitizer 적용 (YouTube iframe & 스타일 화이트리스트)
-- [ ] `POST /api/editor/upload` 및 `POST /api/editor/file-upload` 구현
-- [ ] 보안 다운로드 프록시(`/api/download/:file_uuid`) 및 고아 파일 자동 청소 백그라운드 태스크
-
-### Phase 5: 댓글, 추천 및 관리자 대시보드
-- [ ] 계층형 댓글(대댓글), 비밀댓글, 추천/비추천(`post_votes`)
-- [ ] 관리자 대시보드: 통계, **디자인 테마 변경/미리보기(`/admin/themes`)**, 회원/동적 레벨 관리, 게시판 관리, **미디어/파일 통합 관리 센터**, 포인트 내역

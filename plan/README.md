@@ -1,6 +1,6 @@
 # Rust Board 프로젝트 기획 & 설계 문서
 
-두목님 💕과 아미가 함께 구상하고 철저히 검수한 Rust 기반 그누보드형 웹 프레임워크의 종합 설계 문서 저장소입니다.
+두목님 💕과 아미가 함께 구상하고 철저히 검수한 Rust 기반 웹 프레임워크의 종합 설계 문서 저장소입니다.
 
 ## 📁 문서 목차
 1. [기능 명세 및 아키텍처 명세서 (`specification.md` v1.1.0)](file:///c:/Users/hades/OneDrive/Desktop/작업폴더/rust_board/plan/specification.md)
@@ -21,5 +21,4 @@
    - Phase 1 · Phase 3 (`3-1 ~ 3-4`) · `CRust` UI/다국어(i18n)/DB 로깅 고도화 완료 현황
    - **확장성 최우선 로드맵 (`Track A ~ Track E` 전부 완료 & E2E 검증 완료):** `EventBus` 알림/대댓글/스킨/SEO(A) → 쪽지/신고/임시저장(B) → 이미지최적화/S3(C) → 전용 `/admin/oauth` 소셜로그인(D) → `/admin/ai-settings` · `/admin/ai-builder` 분리형 AI 빌더(E)
 
-4. [수동 테스트 & 실전 QA 체크리스트 (`test_checklist.md`)](file:///c:/Users/hades/OneDrive/Desktop/작업폴더/rust_board/plan/test_checklist.md)
-   - 두목님 💕이 브라우저에서 실제 API 키(OAuth2 · AI · S3)와 전 기능을 하나씩 체크해 볼 수 있는 실전 검증표
+

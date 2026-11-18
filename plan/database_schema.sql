@@ -1,5 +1,5 @@
 -- ==============================================================================
--- Rust Board (그누보드형 웹 프레임워크) 데이터베이스 표준 DDL
+-- Rust Board (웹 프레임워크) 데이터베이스 표준 DDL
 -- 파일명: plan/database_schema.sql
 -- 기준 엔진: SQLite 3 (WAL 모드 + FTS5 Trigram 내장)
 -- 참고: 향후 PostgreSQL / MySQL 확장 시 SeaORM / SQLx 마이그레이션 어댑터로 변환
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS site_configs (
 INSERT OR IGNORE INTO site_configs (cf_key, cf_value, description) VALUES
 ('site_title', 'Rust Board Community', '사이트 타이틀'),
 ('admin_email', 'admin@example.com', '최고관리자 이메일'),
-('active_theme', 'default', '현재 활성화된 사이트 디자인 테마 폴더명'),
+('active_theme', 'success', '현재 활성화된 사이트 디자인 테마 폴더명'),
 ('login_point', '100', '1일 1회 첫 로그인 출석 포인트'),
 ('use_point', '1', '포인트 시스템 사용 여부 (1:사용, 0:미사용)'),
 ('register_level', '2', '신규 회원가입 시 기본 레벨'),
