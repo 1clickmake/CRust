@@ -129,6 +129,8 @@ pub async fn list(
             categories => categories,
             posts => post_items,
             page => page,
+            per_page => per_page,
+            offset => offset,
             total_pages => total_pages,
             total_count => total_count,
             search_q => query.q.unwrap_or_default(),

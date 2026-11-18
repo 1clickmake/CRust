@@ -54,7 +54,7 @@
                 {% if current_user and current_user.mb_level >= 10 %}
                 <td><input type="checkbox" class="chk-board-post" value="{{ p.id }}"></td>
                 {% endif %}
-                <td>{% if p.is_notice == 1 %}<span style="color:var(--primary);">{{ t("board.notice_badge") }}</span>{% else %}{{ p.id }}{% endif %}</td>
+                <td>{% if p.is_notice == 1 %}<span style="color:var(--primary);">{{ t("board.notice_badge") }}</span>{% else %}{{ total_count - offset - loop.index0 }}{% endif %}</td>
                 <td>
                     {% if p.extra and p.extra.qna_solved %}
                     <span style="display:inline-block; padding:2px 8px; border-radius:999px; background:rgba(16,185,129,0.16); color:#10b981; font-size:11px; font-weight:700;">{{ t("board.qna_solved") }}</span>

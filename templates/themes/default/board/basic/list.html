@@ -54,7 +54,7 @@
                 {% if current_user and current_user.mb_level >= 10 %}
                 <td><input type="checkbox" class="chk-board-post" value="{{ p.id }}"></td>
                 {% endif %}
-                <td>{% if p.is_notice == 1 %}<span style="color:var(--primary);">{{ t("board.notice_badge") }}</span>{% else %}{{ p.id }}{% endif %}</td>
+                <td>{% if p.is_notice == 1 %}<span style="color:var(--primary);">{{ t("board.notice_badge") }}</span>{% else %}{{ total_count - offset - loop.index0 }}{% endif %}</td>
                 <td>
                     {% if p.wr_category %}<span style="font-size:12px; color:var(--muted);">[{{ p.wr_category }}]</span>{% endif %}
                     {% if p.is_secret == 1 %}<i class="fas fa-lock" style="font-size:12px; color:#f59e0b;"></i>{% endif %}
