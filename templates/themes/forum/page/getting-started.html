@@ -1,0 +1,304 @@
+{% extends layout_tpl %}
+
+{% block title %}CRust 시작 가이드 (Getting Started) · {{ site_title }}{% endblock %}
+
+{% block content %}
+<div class="card" style="padding: clamp(24px, 4vw, 36px); margin-bottom: 28px; background: linear-gradient(135deg, rgba(79, 70, 229, 0.12) 0%, rgba(59, 130, 246, 0.08) 100%);">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <span style="width: 44px; height: 44px; border-radius: 12px; background: var(--primary); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 22px;">
+            <i class="fas fa-book-open"></i>
+        </span>
+        <div>
+            <h1 style="margin: 0; font-size: clamp(22px, 3vw, 30px); font-weight: 800; letter-spacing: -0.5px;">CRust 완벽 시작 가이드</h1>
+            <p style="margin: 4px 0 0; color: var(--muted); font-size: 14px;">
+                서버 배포부터 aaPanel 연동, 테마 확장 및 커스텀 페이지 추가까지 5분 완성 가이드 🚀
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Anchor Navigation Bar -->
+<div class="card" style="padding: 12px 18px; margin-bottom: 24px; position: sticky; top: 16px; z-index: 90; backdrop-filter: blur(12px); background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 4px 14px rgba(0,0,0,0.06);">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <div style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">
+            <i class="fas fa-compass"></i> 빠른 목차 이동:
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <a href="#step1" class="btn btn-sm" style="font-size: 12px; padding: 6px 12px; border-radius: 999px;">
+                <i class="fas fa-terminal"></i> 1. 복제 &amp; 빌드
+            </a>
+            <a href="#step2" class="btn btn-sm" style="font-size: 12px; padding: 6px 12px; border-radius: 999px;">
+                <i class="fas fa-server"></i> 2. aaPanel 연동
+            </a>
+            <a href="#step3" class="btn btn-sm" style="font-size: 12px; padding: 6px 12px; border-radius: 999px;">
+                <i class="fas fa-palette"></i> 3. 테마 추가
+            </a>
+            <a href="#step4" class="btn btn-sm" style="font-size: 12px; padding: 6px 12px; border-radius: 999px;">
+                <i class="fas fa-file-code"></i> 4. 페이지 추가
+            </a>
+            <a href="#step5" class="btn btn-sm" style="font-size: 12px; padding: 6px 12px; border-radius: 999px;">
+                <i class="fas fa-database"></i> 5. DB &amp; 설정
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+html { scroll-behavior: smooth; }
+.card[id^="step"] { scroll-margin-top: 80px; }
+</style>
+
+<!-- Step 1: Quick Build -->
+<div class="card" id="step1" style="margin-bottom: 24px;">
+    <h2 style="font-size: 20px; font-weight: 700; margin: 0 0 16px; display: flex; align-items: center; gap: 10px;">
+        <span style="display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 14px; align-items: center; justify-content: center;">1</span>
+        저장소 복제 &amp; 초고속 빌드
+    </h2>
+    <p style="color: var(--muted); line-height: 1.6; margin-bottom: 14px;">
+        CRust는 Nginx, PHP-FPM, 외부 DB 서버 없이도 <strong>실행 파일 하나로 구동되는 단일 바이너리(Single Binary)</strong> 구조입니다.
+    </p>
+
+    <div style="background: #111827; color: #f9fafb; padding: 14px 18px; border-radius: 8px; font-family: monospace; font-size: 13.5px; overflow-x: auto; margin-bottom: 16px;">
+        <span style="color: #9ca3af;"># 1. 저장소 복제 및 이동</span><br>
+        git clone https://github.com/1clickmake/CRust.git crust<br>
+        cd crust<br><br>
+        <span style="color: #9ca3af;"># 2. 설정 파일 복사</span><br>
+        cp config.example.toml config.toml<br><br>
+        <span style="color: #9ca3af;"># 3. 릴리즈 빌드 및 실행</span><br>
+        cargo run --release
+    </div>
+
+    <div style="background: var(--bg-card); border-left: 4px solid var(--primary); padding: 12px 16px; border-radius: 0 6px 6px 0; font-size: 13.5px; line-height: 1.6;">
+        <strong>💡 제로 컨피그(Zero-Config) 자동 설치:</strong><br>
+        별도의 웹 인스톨러 마법사 없이, 서버가 실행될 때 SQLite DB(<code>rust_board.db</code>) 및 필수 테이블, 기본 게시판(notice, free), 최고관리자 계정이 0.1초 만에 자동 생성됩니다.<br>
+        • 기본 관리자 계정: <code>admin</code> / <code>admin1234</code>
+    </div>
+</div>
+
+<!-- Step 2: aaPanel Setup -->
+<div class="card" id="step2" style="margin-bottom: 24px;">
+    <h2 style="font-size: 20px; font-weight: 700; margin: 0 0 16px; display: flex; align-items: center; gap: 10px;">
+        <span style="display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 14px; align-items: center; justify-content: center;">2</span>
+        aaPanel 연동 (리버스 프록시, SSL, 데몬 등록)
+    </h2>
+    <p style="color: var(--muted); line-height: 1.6; margin-bottom: 14px;">
+        aaPanel 환경에서는 마우스 클릭 몇 번으로 Nginx 역방향 프록시와 무료 HTTPS(Let's Encrypt), 백그라운드 무중단 실행(Supervisor)을 구성할 수 있습니다.
+    </p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px;">
+        <!-- Card A -->
+        <div style="border: 1px solid var(--border); border-radius: 8px; padding: 16px; background: var(--bg-card);">
+            <h4 style="margin: 0 0 8px; font-size: 15px; color: var(--primary);"><i class="fas fa-globe"></i> 웹사이트 등록</h4>
+            <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); line-height: 1.6;">
+                <li>aaPanel ➔ <strong>[Website]</strong> ➔ <strong>[Add site]</strong></li>
+                <li><strong>Domain</strong>: <code>crust.cmake.work</code></li>
+                <li><strong>Website path</strong>: <code>/www/wwwroot/crust</code></li>
+                <li><strong>Database</strong>: <code>None</code> / <strong>PHP</strong>: <code>Pure</code></li>
+            </ul>
+        </div>
+
+        <!-- Card B -->
+        <div style="border: 1px solid var(--border); border-radius: 8px; padding: 16px; background: var(--bg-card);">
+            <h4 style="margin: 0 0 8px; font-size: 15px; color: var(--primary);"><i class="fas fa-random"></i> 역방향 프록시 설정</h4>
+            <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); line-height: 1.6;">
+                <li>사이트 <strong>[Settings]</strong> ➔ <strong>[Reverse Proxy]</strong></li>
+                <li><strong>Target URL</strong>: <code>http://127.0.0.1:3000</code></li>
+                <li><strong>Proxy Directory</strong>: <code>/</code> (기본값)</li>
+                <li><strong>Sent Domain</strong>: <code>$host</code></li>
+            </ul>
+        </div>
+
+        <!-- Card C -->
+        <div style="border: 1px solid var(--border); border-radius: 8px; padding: 16px; background: var(--bg-card);">
+            <h4 style="margin: 0 0 8px; font-size: 15px; color: var(--primary);"><i class="fas fa-lock"></i> 무료 HTTPS (SSL)</h4>
+            <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); line-height: 1.6;">
+                <li>설정 창 좌측 <strong>[SSL]</strong> 탭 클릭</li>
+                <li><strong>[Let's Encrypt]</strong> 선택 ➔ 도메인 체크 ➔ <strong>[Apply]</strong></li>
+                <li>발급 후 <strong>[Force HTTPS]</strong> 토글 스위치 ON!</li>
+            </ul>
+        </div>
+
+        <!-- Card D -->
+        <div style="border: 1px solid var(--border); border-radius: 8px; padding: 16px; background: var(--bg-card);">
+            <h4 style="margin: 0 0 8px; font-size: 15px; color: var(--primary);"><i class="fas fa-shield-alt"></i> Supervisor 무중단 데몬</h4>
+            <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); line-height: 1.6;">
+                <li>aaPanel ➔ <strong>[App Store]</strong> ➔ <code>Supervisor</code> 무료 설치</li>
+                <li><strong>Command</strong>: <code>/www/wwwroot/crust/target/release/rust_board</code></li>
+                <li><strong>Run Dir</strong>: <code>/www/wwwroot/crust</code> / <strong>User</strong>: <code>root</code></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Step 3: Theme Management -->
+<div class="card" id="step3" style="margin-bottom: 24px;">
+    <h2 style="font-size: 20px; font-weight: 700; margin: 0 0 16px; display: flex; align-items: center; gap: 10px;">
+        <span style="display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 14px; align-items: center; justify-content: center;">3</span>
+        나만의 테마 추가 &amp; FTP 실시간 커스텀
+    </h2>
+    <p style="color: var(--muted); line-height: 1.6; margin-bottom: 14px;">
+        CRust는 그누보드처럼 폴더 단위로 테마를 관리합니다. 복잡한 컴파일 없이 FTP로 폴더만 복사해 넣으면 끝납니다.
+    </p>
+
+    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px; margin-bottom: 14px;">
+        <h4 style="margin: 0 0 10px; font-size: 15px;"><i class="fas fa-folder-plus"></i> 새 테마 생성 3단계</h4>
+        <ol style="margin: 0; padding-left: 20px; color: var(--text); font-size: 13.5px; line-height: 1.7;">
+            <li><code>templates/themes/default/</code> 폴더를 복사하여 <code>templates/themes/my_theme/</code> 폴더를 생성합니다.</li>
+            <li>안에 있는 <code>theme.toml</code> 파일을 열고 테마 이름, 설명, 버전을 수정합니다:
+                <pre style="background: #111827; color: #f9fafb; padding: 10px 14px; border-radius: 6px; font-size: 12.5px; margin: 8px 0;">name = "내 전용 테마"
+slug = "my_theme"
+version = "1.0.0"
+author = "두목님 &amp; 아사미야 💕"
+description = "초고속 반응형 커스텀 테마"</pre>
+            </li>
+            <li>관리자 페이지(<code>/admin/themes</code>)에 접속하면 새 테마가 <strong>자동 인식</strong>되어 목록에 뜹니다. <strong>[활성화]</strong> 버튼을 누르면 서버 재시작 없이 즉시 디자인이 교체됩니다!</li>
+        </ol>
+    </div>
+
+    <div style="background: var(--bg-card); border-left: 4px solid #10b981; padding: 12px 16px; border-radius: 0 6px 6px 0; font-size: 13px; line-height: 1.6;">
+        <strong>✨ 스마트 템플릿 Fallback 지원:</strong><br>
+        새 테마에 모든 HTML을 다 만들 필요가 없습니다. 내가 수정하고 싶은 페이지만 넣어두면, 없는 파일은 <code>default</code> 테마에서 자동으로 빌려와서 안전하게 렌더링합니다.
+    </div>
+</div>
+
+<!-- Step 4: Page Routing -->
+<div class="card" id="step4" style="margin-bottom: 24px;">
+    <h2 style="font-size: 20px; font-weight: 700; margin: 0 0 16px; display: flex; align-items: center; gap: 10px;">
+        <span style="display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 14px; align-items: center; justify-content: center;">4</span>
+        파일 기반 동적 페이지 추가 (<code>/page/{이름}</code>)
+    </h2>
+    <p style="color: var(--muted); line-height: 1.6; margin-bottom: 14px;">
+        DB 등록 없이 FTP로 <code>page/</code> 폴더에 <code>.html</code> 파일만 넣으면 웹페이지가 즉시 생성됩니다.
+    </p>
+
+    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px; margin-bottom: 14px;">
+        <h4 style="margin: 0 0 8px; font-size: 15px;"><i class="fas fa-file-code"></i> 예시: 회사소개 페이지 만들기</h4>
+        <p style="margin: 0 0 10px; font-size: 13.5px; color: var(--muted);">
+            <code>templates/themes/forum/page/about.html</code> 파일을 생성하고 아래처럼 작성합니다:
+        </p>
+        <pre style="background: #111827; color: #f9fafb; padding: 12px 16px; border-radius: 6px; font-size: 13px; margin: 0 0 10px; overflow-x: auto;">{% raw %}{% extends layout_tpl %}
+
+{% block title %}회사 소개 · {{ site_title }}{% endblock %}
+
+{% block content %}
+<div class="card" style="padding: 30px;">
+    <h1>회사 소개</h1>
+    <p>CRust 기반으로 제작된 초고속 비즈니스 플랫폼입니다.</p>
+</div>
+{% endblock %}{% endraw %}</pre>
+        <p style="margin: 0; font-size: 13px; color: var(--primary); font-weight: 600;">
+            👉 접속 주소: <code>https://crust.cmake.work/page/about</code>
+        </p>
+    </div>
+    
+    <div style="font-size: 13px; color: var(--muted); line-height: 1.6;">
+        • 상단 네비게이션, 헤더, 다크모드/라이트모드, 다국어 전환 기능이 자동으로 완벽 상속됩니다.<br>
+        • 순수 HTML 단독 페이지가 필요할 경우 <code>static/</code> 폴더를 활용할 수도 있습니다.
+    </div>
+</div>
+
+<!-- Step 5: Database & Config -->
+<div class="card" id="step5" style="margin-bottom: 24px;">
+    <h2 style="font-size: 20px; font-weight: 700; margin: 0 0 16px; display: flex; align-items: center; gap: 10px;">
+        <span style="display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 14px; align-items: center; justify-content: center;">5</span>
+        데이터베이스(DB명/유저/패스워드) &amp; 환경설정 관리
+    </h2>
+    <p style="color: var(--muted); line-height: 1.6; margin-bottom: 16px;">
+        CRust의 데이터베이스 및 핵심 환경 설정은 루트 디렉토리의 <strong><code>config.toml</code></strong> 파일 하나로 간편하게 제어합니다.
+    </p>
+
+    <!-- Sub Card 1: DB Name Change -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px; margin-bottom: 16px;">
+        <h4 style="margin: 0 0 10px; font-size: 15px; color: var(--primary);">
+            <i class="fas fa-database"></i> 1. 데이터베이스 명(파일명) 변경 방법
+        </h4>
+        <p style="margin: 0 0 10px; font-size: 13.5px; color: var(--muted); line-height: 1.6;">
+            현재 기본 내장된 SQLite는 서버 없이 파일 하나가 곧 데이터베이스입니다. <code>config.toml</code>의 <code>url</code> 항목에서 파일명을 원하는 대로 변경할 수 있습니다:
+        </p>
+        <div style="background: #111827; color: #f9fafb; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; margin-bottom: 10px;">
+[database]<br>
+<span style="color: #9ca3af;"># 기본값: sqlite://rust_board.db?mode=rwc</span><br>
+url = "sqlite://my_community.db?mode=rwc"<br>
+max_connections = 10
+        </div>
+        <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); line-height: 1.6;">
+            <li><strong>신규 생성:</strong> 새 파일명으로 바꾸고 프로세스를 재시작하면, 그 이름으로 빈 DB와 기본 데이터가 0.1초 만에 자동 생성됩니다.</li>
+            <li><strong>기존 데이터 유지:</strong> 서버 터미널에서 <code>mv rust_board.db my_community.db</code> 로 파일명을 변경한 뒤 <code>config.toml</code>을 수정하시면 기존 글과 회원이 100% 그대로 유지됩니다.</li>
+        </ul>
+    </div>
+
+    <!-- Sub Card 2: Password Change -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px; margin-bottom: 16px;">
+        <h4 style="margin: 0 0 10px; font-size: 15px; color: var(--primary);">
+            <i class="fas fa-key"></i> 2. 관리자 패스워드 &amp; 계정 정보 변경 방법
+        </h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
+            <div style="padding: 12px 14px; border-radius: 6px; background: rgba(0,0,0,0.02); border: 1px dashed var(--border);">
+                <div style="font-weight: 700; font-size: 13.5px; margin-bottom: 6px; color: #10b981;">
+                    <i class="fas fa-check-circle"></i> 방법 A: 웹 화면에서 즉시 변경 (권장)
+                </div>
+                <p style="margin: 0; font-size: 13px; color: var(--muted); line-height: 1.6;">
+                    1. <code>/member/login</code> 에 초기 계정(<code>admin</code> / <code>admin1234</code>)으로 로그인<br>
+                    2. 마이페이지(내 정보 수정) ➔ <strong>비밀번호 변경</strong> 클릭<br>
+                    3. 새 비밀번호를 입력하면 초강력 <strong>Argon2id</strong> 해시로 암호화되어 안전하게 변경됩니다!
+                </p>
+            </div>
+            <div style="padding: 12px 14px; border-radius: 6px; background: rgba(0,0,0,0.02); border: 1px dashed var(--border);">
+                <div style="font-weight: 700; font-size: 13.5px; margin-bottom: 6px; color: #6366f1;">
+                    <i class="fas fa-code"></i> 방법 B: 소스코드 초기 시드 변경
+                </div>
+                <p style="margin: 0; font-size: 13px; color: var(--muted); line-height: 1.6;">
+                    첫 배포 시 자동 생성되는 계정 자체를 바꾸고 싶다면, <code>src/db.rs</code> 33~42번째 줄의 <code>"admin"</code>과 <code>"admin1234"</code>를 원하는 기본값으로 수정한 뒤 빌드하면 됩니다.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sub Card 3: MySQL / MariaDB Expansion -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px; margin-bottom: 16px;">
+        <h4 style="margin: 0 0 10px; font-size: 15px; color: var(--primary);">
+            <i class="fas fa-server"></i> 3. MySQL / MariaDB (유저명, 패스워드, DB명) 연결 포맷
+        </h4>
+        <p style="margin: 0 0 10px; font-size: 13.5px; color: var(--muted); line-height: 1.6;">
+            aaPanel 등에서 MySQL/MariaDB 데이터베이스를 생성하여 연결하고자 할 경우, 아래 형식의 표준 Connection String을 <code>config.toml</code>에 지정할 수 있습니다:
+        </p>
+        <div style="background: #111827; color: #f9fafb; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; margin-bottom: 8px; overflow-x: auto;">
+[database]<br>
+<span style="color: #9ca3af;"># 포맷: mysql://유저명:패스워드@호스트주소:포트/데이터베이스명</span><br>
+url = "mysql://crust_user:mypassword123@127.0.0.1:3306/crust_db"
+        </div>
+        <p style="margin: 0; font-size: 12.5px; color: var(--muted);">
+            ※ 대규모 서비스 확장을 위해 MySQL 또는 PostgreSQL 드라이버를 활성화할 때 동일한 방식으로 간편하게 유저명과 패스워드를 지정할 수 있습니다.
+        </p>
+    </div>
+
+    <!-- Sub Card 4: config.toml overview -->
+    <div style="background: #111827; color: #f9fafb; padding: 14px 18px; border-radius: 8px; font-family: monospace; font-size: 13px; margin-bottom: 12px; overflow-x: auto;">
+[server]<br>
+host = "127.0.0.1"<br>
+port = 3000<br>
+dev_mode = false  <span style="color: #9ca3af;"># true 설정 시 템플릿(HTML) 수정 즉시 새로고침 반영</span><br><br>
+[storage]<br>
+driver = "local"  <span style="color: #9ca3af;"># local 또는 s3 (Cloudflare R2 / AWS S3 지원)</span><br>
+upload_dir = "uploads"<br>
+max_file_size_mb = 20
+    </div>
+
+    <div style="font-size: 13px; color: var(--muted); line-height: 1.6;">
+        • <strong>백업 &amp; 복원:</strong> SQLite 파일(<code>rust_board.db</code>) 하나만 복사해두면 완벽한 백업이 완료됩니다.<br>
+        • <strong>설정 반영:</strong> <code>config.toml</code> 파일 수정 후에는 aaPanel Supervisor에서 프로세스를 한 번만 [Restart] 해주시면 적용됩니다.
+    </div>
+</div>
+
+<div class="card" style="text-align: center; padding: 30px; background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(59, 130, 246, 0.05));">
+    <h3 style="margin: 0 0 10px; font-size: 18px; font-weight: 700;">이제 직접 테스트해 보세요!</h3>
+    <p style="margin: 0 0 18px; font-size: 14px; color: var(--muted);">
+        궁금한 점이나 새로운 기능 제안은 포럼 게시판에 언제든 자유롭게 남겨주세요.
+    </p>
+    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <a href="/board/free" class="btn btn-primary"><i class="fas fa-comments"></i> 자유게시판 바로가기</a>
+        <a href="/" class="btn"><i class="fas fa-home"></i> 메인 홈으로</a>
+        <a href="https://github.com/1clickmake/CRust" target="_blank" rel="noopener" class="btn"><i class="fab fa-github"></i> GitHub 저장소</a>
+    </div>
+</div>
+{% endblock %}
