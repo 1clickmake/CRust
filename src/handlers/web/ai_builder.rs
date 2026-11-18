@@ -225,8 +225,27 @@ pub async fn custom_page_view(
     Path(slug): Path<String>,
     Query(q): Query<PreviewQuery>,
 ) -> Result<Html<String>, AppError> {
-    let page = ai::get_published_page(&state.db, &slug).await?;
+    if !crate::state::is_safe_slug(&slug) {
+        return Err(AppError::BadRequest("유효하지 않은 페이지 주소입니다.".into()));
+    }
     let (theme, base) = build_base_context(&state, &auth, None, q.preview_theme.as_deref()).await?;
+
+    // 1. 파일 기반 템플릿 우선 탐색 (templates/themes/{theme}/page/{slug}.html 또는 default Fallback)
+    let page_rel = format!("page/{}.html", slug);
+    let resolved_tpl = theme_service::resolve_template(&theme, &page_rel);
+    if std::path::Path::new("templates").join(&resolved_tpl).exists() {
+        let html = state.render_template(
+            &resolved_tpl,
+            context! {
+                slug => slug,
+                ..base
+            },
+        )?;
+        return Ok(Html(html));
+    }
+
+    // 2. DB 기반 커스텀 페이지 조회
+    let page = ai::get_published_page(&state.db, &slug).await?;
     let tpl = theme_service::resolve_template(&theme, "page.html");
     let html = state.render_template(
         &tpl,

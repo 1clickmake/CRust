@@ -1,0 +1,38 @@
+{% extends layout_tpl %}
+
+{% block title %}추가 페이지 샘플 · {{ site_title }}{% endblock %}
+
+{% block content %}
+<div class="card" style="padding: 32px; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 10px; background: rgba(79, 70, 229, 0.1); color: var(--primary); font-size: 20px;">
+            <i class="fas fa-file-alt"></i>
+        </span>
+        <div>
+            <h1 style="margin: 0; font-size: 24px; font-weight: 700;">추가 페이지 샘플</h1>
+            <p style="margin: 4px 0 0; color: var(--muted); font-size: 14px;">
+                <code>templates/themes/default/page/sample.html</code> 파일 기반 동적 라우팅
+            </p>
+        </div>
+    </div>
+
+    <div style="border-top: 1px solid var(--border); padding-top: 20px; line-height: 1.8; color: var(--text);">
+        <p>안녕하세요! <strong>CRust</strong> 프레임워크의 파일 기반 커스텀 페이지 기능입니다. 💕</p>
+        
+        <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; margin: 18px 0;">
+            <h3 style="margin: 0 0 10px; font-size: 16px; color: var(--primary);">
+                <i class="fas fa-magic"></i> 이 페이지가 동작하는 원리
+            </h3>
+            <ul style="margin: 0; padding-left: 20px; color: var(--muted); font-size: 14px;">
+                <li>DB 등록 없이 <code>templates/themes/내테마/page/{이름}.html</code> 파일만 추가하면 <code>/page/{이름}</code> 주소로 즉시 열립니다.</li>
+                <li>활성 테마에 파일이 없으면 자동으로 <code>default</code> 테마의 <code>page/</code> 폴더에서 찾아 띄워줍니다 (Fallback 지원).</li>
+                <li>상단 메뉴바, 헤더, 다크모드/라이트모드, 언어 전환 기능이 자동으로 완벽하게 적용됩니다.</li>
+            </ul>
+        </div>
+
+        <p style="margin-bottom: 0;">
+            두목님만의 회사 소개, 서비스 안내, 이벤트 랜딩 페이지를 FTP나 에디터로 자유롭게 추가해 보세요! ✨
+        </p>
+    </div>
+</div>
+{% endblock %}
