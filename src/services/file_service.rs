@@ -58,7 +58,8 @@ pub async fn upload_temp_file(
         ));
     }
 
-    let (final_data, final_ext, final_mime) = if is_image_only {
+    let is_resizable_image = IMAGE_EXTENSIONS.contains(&ext.as_str());
+    let (final_data, final_ext, final_mime) = if is_image_only || is_resizable_image {
         let cfg = settings_service::load_all(&state.db).await;
         let max_w = cfg.img_max_width;
         let to_webp = cfg.img_webp_enabled;
