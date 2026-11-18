@@ -9,3 +9,4 @@ config.toml
 .env
 .DS_Store
 Thumbs.db
+templates/themes/forum/
