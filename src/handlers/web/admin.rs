@@ -790,6 +790,7 @@ pub async fn files_page(
 #[derive(Deserialize)]
 pub struct SettingsUpdateForm {
     pub site_title: String,
+    pub site_description: Option<String>,
     pub admin_email: String,
     pub default_lang: Option<String>,
     pub page_rows: i64,
@@ -854,6 +855,7 @@ pub async fn settings_update(
 
     let s = settings_service::SiteSettings {
         site_title: site_title.to_string(),
+        site_description: form.site_description.unwrap_or_default().trim().to_string(),
         admin_email: form.admin_email.trim().to_string(),
         default_lang: form.default_lang.unwrap_or_else(|| "ko".to_string()),
         page_rows: form.page_rows.clamp(5, 100),

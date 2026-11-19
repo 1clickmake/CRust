@@ -230,6 +230,9 @@ pub async fn custom_page_view(
     }
     let (theme, base) = build_base_context(&state, &auth, None, q.preview_theme.as_deref()).await?;
 
+    let base_trimmed = auth.base_url.trim_end_matches('/');
+    let canonical_url = format!("{}/page/{}", base_trimmed, slug);
+
     // 1. 파일 기반 템플릿 우선 탐색 (templates/themes/{theme}/page/{slug}.html 또는 default Fallback)
     let page_rel = format!("page/{}.html", slug);
     let resolved_tpl = theme_service::resolve_template(&theme, &page_rel);
@@ -238,6 +241,7 @@ pub async fn custom_page_view(
             &resolved_tpl,
             context! {
                 slug => slug,
+                canonical_url => canonical_url,
                 ..base
             },
         )?;
@@ -246,11 +250,15 @@ pub async fn custom_page_view(
 
     // 2. DB 기반 커스텀 페이지 조회
     let page = ai::get_published_page(&state.db, &slug).await?;
+    let meta_description = crate::services::board_service::strip_html_summary(&page.content_html, 150);
     let tpl = theme_service::resolve_template(&theme, "page.html");
     let html = state.render_template(
         &tpl,
         context! {
             page => page,
+            og_title => page.title,
+            meta_description => meta_description,
+            canonical_url => canonical_url,
             ..base
         },
     )?;

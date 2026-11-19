@@ -12,7 +12,7 @@ pub fn escape_xml(s: &str) -> String {
 
 pub fn build_robots_txt(base_url: &str) -> String {
     format!(
-        "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nDisallow: /member/profile\n\nSitemap: {}/sitemap.xml\n",
+        "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nDisallow: /member/login\nDisallow: /member/register\nDisallow: /member/profile\nDisallow: /member/memo\n\nSitemap: {}/sitemap.xml\n",
         base_url.trim_end_matches('/')
     )
 }
@@ -113,11 +113,17 @@ pub async fn build_rss_xml(pool: &SqlitePool, base_url: &str) -> Result<String, 
     .fetch_all(pool)
     .await?;
 
+    let channel_desc = if settings.site_description.trim().is_empty() {
+        format!("{} Latest Posts RSS Feed", settings.site_title)
+    } else {
+        settings.site_description.clone()
+    };
+
     let mut xml = format!(
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<rss version=\"2.0\">\n<channel>\n  <title>{}</title>\n  <link>{}/</link>\n  <description>{} Latest Posts RSS Feed</description>\n",
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<rss version=\"2.0\">\n<channel>\n  <title>{}</title>\n  <link>{}/</link>\n  <description>{}</description>\n",
         escape_xml(&settings.site_title),
         escape_xml(base),
-        escape_xml(&settings.site_title)
+        escape_xml(&channel_desc)
     );
 
     for p in posts {
@@ -136,4 +142,133 @@ pub async fn build_rss_xml(pool: &SqlitePool, base_url: &str) -> Result<String, 
 
     xml.push_str("</channel>\n</rss>\n");
     Ok(xml)
+}
+
+fn serialize_json_ld(val: &serde_json::Value) -> String {
+    serde_json::to_string(val)
+        .unwrap_or_default()
+        .replace("</", "<\\/")
+}
+
+pub fn build_website_json_ld(base_url: &str, site_title: &str, description: &str) -> String {
+    let base = base_url.trim_end_matches('/');
+    let val = serde_json::json!({
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": site_title,
+        "url": format!("{}/", base),
+        "description": description,
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": format!("{}/board/free?q={{search_term_string}}", base),
+            "query-input": "required name=search_term_string"
+        }
+    });
+    serialize_json_ld(&val)
+}
+
+pub fn build_board_json_ld(
+    base_url: &str,
+    bo_table: &str,
+    bo_subject: &str,
+    canonical_url: &str,
+) -> String {
+    let base = base_url.trim_end_matches('/');
+    let val = serde_json::json!({
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "CollectionPage",
+                "name": bo_subject,
+                "url": canonical_url
+            },
+            {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {
+                        "@type": "ListItem",
+                        "position": 1,
+                        "name": "Home",
+                        "item": format!("{}/", base)
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 2,
+                        "name": bo_subject,
+                        "item": format!("{}/board/{}", base, bo_table)
+                    }
+                ]
+            }
+        ]
+    });
+    serialize_json_ld(&val)
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn build_post_json_ld(
+    base_url: &str,
+    bo_table: &str,
+    bo_subject: &str,
+    post_id: i64,
+    subject: &str,
+    summary: &str,
+    author: &str,
+    created_at: &str,
+    updated_at: &str,
+    comment_count: usize,
+    image_url: Option<&str>,
+) -> String {
+    let base = base_url.trim_end_matches('/');
+    let post_url = format!("{}/board/{}/{}", base, bo_table, post_id);
+    let mut posting = serde_json::json!({
+        "@type": "DiscussionForumPosting",
+        "headline": subject,
+        "text": summary,
+        "url": post_url,
+        "datePublished": created_at,
+        "dateModified": updated_at,
+        "author": {
+            "@type": "Person",
+            "name": author
+        },
+        "interactionStatistic": {
+            "@type": "InteractionCounter",
+            "interactionType": "https://schema.org/CommentAction",
+            "userInteractionCount": comment_count
+        }
+    });
+    if let Some(img) = image_url.filter(|s| !s.is_empty()) {
+        posting["image"] = serde_json::json!(img);
+    }
+
+    let val = serde_json::json!({
+        "@context": "https://schema.org",
+        "@graph": [
+            posting,
+            {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {
+                        "@type": "ListItem",
+                        "position": 1,
+                        "name": "Home",
+                        "item": format!("{}/", base)
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 2,
+                        "name": bo_subject,
+                        "item": format!("{}/board/{}", base, bo_table)
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 3,
+                        "name": subject,
+                        "item": post_url
+                    }
+                ]
+            }
+        ]
+    });
+    serialize_json_ld(&val)
 }

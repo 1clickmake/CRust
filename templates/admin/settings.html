@@ -79,6 +79,10 @@
                 <input type="text" name="site_title" value="{{ settings.site_title }}" class="input" required>
             </div>
             <div class="set-field">
+                <label>사이트 설명 (SEO Meta Description)</label>
+                <input type="text" name="site_description" value="{{ settings.site_description }}" class="input" placeholder="구글 검색 결과에 표시될 사이트 한 줄 설명">
+            </div>
+            <div class="set-field">
                 <label>{{ t("admin.admin_email_label") }}</label>
                 <input type="email" name="admin_email" value="{{ settings.admin_email }}" class="input" required>
             </div>

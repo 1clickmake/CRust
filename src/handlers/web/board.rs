@@ -1,7 +1,7 @@
 use crate::error::AppError;
 use crate::handlers::web::build_base_context;
 use crate::middlewares::auth::{ensure_csrf_cookie, AuthContext};
-use crate::services::{board_service, settings_service, theme_service};
+use crate::services::{board_service, seo_service, settings_service, theme_service};
 use crate::state::AppState;
 use axum::extract::{Path, Query, State};
 use axum::response::{Html, IntoResponse, Redirect};
@@ -120,6 +120,30 @@ pub async fn list(
     let total_pages = ((total_count as f64) / (per_page as f64)).ceil().max(1.0) as i64;
     let categories = board.categories();
     let post_items = board_service::build_post_list_items(&state.db, posts).await;
+    let base_trimmed = auth.base_url.trim_end_matches('/');
+    let has_search = query.q.as_deref().map(|s| !s.trim().is_empty()).unwrap_or(false);
+    let canonical_url = if page > 1 {
+        format!("{}/board/{}?page={}", base_trimmed, bo_table, page)
+    } else {
+        format!("{}/board/{}", base_trimmed, bo_table)
+    };
+    let meta_robots = if has_search { "noindex, follow" } else { "index, follow" };
+    let page_title = if page > 1 {
+        format!("{} ({}p) - {}", board.bo_subject, page, settings.site_title)
+    } else {
+        format!("{} - {}", board.bo_subject, settings.site_title)
+    };
+    let meta_description = format!(
+        "{} — 총 {}개의 게시글이 등록되어 있습니다.",
+        board.bo_subject, total_count
+    );
+    let json_ld = seo_service::build_board_json_ld(
+        base_trimmed,
+        &bo_table,
+        &board.bo_subject,
+        &canonical_url,
+    );
+
     let tpl = theme_service::resolve_board_template(&theme, &board.bo_skin, "list.html");
 
     let html = state.render_template(
@@ -135,6 +159,12 @@ pub async fn list(
             total_count => total_count,
             search_q => query.q.unwrap_or_default(),
             current_category => query.category.unwrap_or_default(),
+            page_title => page_title,
+            og_title => page_title,
+            meta_description => meta_description,
+            canonical_url => canonical_url,
+            meta_robots => meta_robots,
+            json_ld => json_ld,
             ..base
         },
     )?;
@@ -168,9 +198,31 @@ pub async fn view(
     let comment_views = board_service::build_comment_views(comments.clone(), &post, auth.member.as_ref());
     let post_extra: serde_json::Value =
         serde_json::from_str(&post.extra_data).unwrap_or_else(|_| serde_json::json!({}));
+    let settings = settings_service::load_all(&state.db).await;
+    let base_trimmed = auth.base_url.trim_end_matches('/');
+    let canonical_url = format!("{}/board/{}/{}", base_trimmed, bo_table, post_id);
+    let page_title = format!("{} - {} - {}", post.wr_subject, board.bo_subject, settings.site_title);
     let og_title = post.wr_subject.clone();
     let og_description = board_service::strip_html_summary(&post.wr_content, 150);
-    let og_image = board_service::extract_first_image(&post.wr_content).unwrap_or_default();
+    let raw_image = board_service::extract_first_image(&post.wr_content).unwrap_or_default();
+    let og_image = if raw_image.starts_with('/') {
+        format!("{}{}", base_trimmed, raw_image)
+    } else {
+        raw_image
+    };
+    let json_ld = seo_service::build_post_json_ld(
+        base_trimmed,
+        &bo_table,
+        &board.bo_subject,
+        post.id,
+        &post.wr_subject,
+        &og_description,
+        &post.wr_name,
+        &post.created_at,
+        &post.updated_at,
+        comment_views.len(),
+        if og_image.is_empty() { None } else { Some(&og_image) },
+    );
 
     let tpl = theme_service::resolve_board_template(&theme, &board.bo_skin, "view.html");
     let html = state.render_template(
@@ -180,10 +232,14 @@ pub async fn view(
             post => post,
             comments => comment_views,
             post_extra => post_extra,
+            page_title => page_title,
             og_title => og_title,
             og_description => og_description,
+            meta_description => og_description,
             og_image => og_image,
             og_type => "article",
+            canonical_url => canonical_url,
+            json_ld => json_ld,
             can_edit => can_manage,
             can_delete => can_manage,
             is_guest_post => is_guest_post,

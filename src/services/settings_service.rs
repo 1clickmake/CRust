@@ -7,6 +7,7 @@ use std::collections::HashMap;
 pub struct SiteSettings {
     // 1. 홈페이지 기본 설정
     pub site_title: String,
+    pub site_description: String,
     pub admin_email: String,
     pub default_lang: String,
     pub page_rows: i64,
@@ -43,6 +44,7 @@ impl Default for SiteSettings {
     fn default() -> Self {
         Self {
             site_title: "CRust".to_string(),
+            site_description: "CRust — Rust(Axum + SQLite FTS5) 기반 고속 커뮤니티 포럼".to_string(),
             admin_email: "admin@example.com".to_string(),
             default_lang: "ko".to_string(),
             page_rows: 15,
@@ -90,6 +92,7 @@ pub async fn load_all(pool: &SqlitePool) -> SiteSettings {
 
     SiteSettings {
         site_title: get_str("site_title", d.site_title),
+        site_description: get_str("site_description", d.site_description),
         admin_email: get_str("admin_email", d.admin_email),
         default_lang: {
             let v = get_str("default_lang", d.default_lang);
@@ -132,8 +135,9 @@ pub async fn save_all(pool: &SqlitePool, s: &SiteSettings) -> Result<(), AppErro
         "ko".to_string()
     };
 
-    let pairs: [(&str, String); 23] = [
+    let pairs: [(&str, String); 24] = [
         ("site_title", s.site_title.trim().to_string()),
+        ("site_description", s.site_description.trim().to_string()),
         ("admin_email", s.admin_email.trim().to_string()),
         ("default_lang", valid_lang),
         ("page_rows", s.page_rows.clamp(5, 100).to_string()),

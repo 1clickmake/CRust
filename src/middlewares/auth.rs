@@ -17,6 +17,7 @@ pub struct AuthContext {
     pub user_agent: String,
     pub lang_cookie: Option<String>,
     pub accept_lang: Option<String>,
+    pub base_url: String,
 }
 
 impl AuthContext {
@@ -107,6 +108,7 @@ impl FromRequestParts<AppState> for AuthContext {
             .get("accept-language")
             .and_then(|v| v.to_str().ok())
             .map(|s| s.to_string());
+        let base_url = crate::handlers::web::seo::resolve_base_url(&parts.headers, state);
 
         if let Some(sid) = session_cookie {
             if let Some((member, csrf_token)) =
@@ -125,6 +127,7 @@ impl FromRequestParts<AppState> for AuthContext {
                     user_agent,
                     lang_cookie,
                     accept_lang,
+                    base_url,
                 });
             }
         }
@@ -145,6 +148,7 @@ impl FromRequestParts<AppState> for AuthContext {
             user_agent,
             lang_cookie,
             accept_lang,
+            base_url,
         })
     }
 }

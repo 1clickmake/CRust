@@ -3,7 +3,7 @@ use crate::handlers::web::{build_base_context, PreviewQuery};
 use crate::i18n::{is_supported_lang, LANG_COOKIE_NAME};
 use crate::middlewares::auth::AuthContext;
 use crate::models::post::Post;
-use crate::services::theme_service;
+use crate::services::{seo_service, settings_service, theme_service};
 use crate::state::AppState;
 use axum::extract::{Path, Query, State};
 use axum::http::HeaderMap;
@@ -55,12 +55,23 @@ pub async fn index(
     .fetch_all(&state.db)
     .await?;
 
+    let settings = settings_service::load_all(&state.db).await;
+    let base_trimmed = auth.base_url.trim_end_matches('/');
+    let canonical_url = format!("{}/", base_trimmed);
+    let json_ld = seo_service::build_website_json_ld(
+        base_trimmed,
+        &settings.site_title,
+        &settings.site_description,
+    );
+
     let tpl = theme_service::resolve_template(&theme, "index.html");
     let html = state.render_template(
         &tpl,
         context! {
             latest_notices => latest_notices,
             latest_free => latest_free,
+            canonical_url => canonical_url,
+            json_ld => json_ld,
             ..base
         },
     )?;

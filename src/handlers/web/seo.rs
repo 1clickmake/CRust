@@ -5,15 +5,21 @@ use axum::extract::State;
 use axum::http::{header, HeaderMap, StatusCode};
 use axum::response::IntoResponse;
 
-fn resolve_base_url(headers: &HeaderMap, state: &AppState) -> String {
+pub fn resolve_base_url(headers: &HeaderMap, state: &AppState) -> String {
     let proto = headers
         .get("x-forwarded-proto")
         .and_then(|v| v.to_str().ok())
+        .map(|s| s.split(',').next().unwrap_or(s).trim())
         .filter(|s| *s == "http" || *s == "https")
         .unwrap_or("http");
 
-    if let Some(host) = headers.get("host").and_then(|v| v.to_str().ok()) {
-        let clean_host = host.trim();
+    let host_header = headers
+        .get("x-forwarded-host")
+        .or_else(|| headers.get("host"))
+        .and_then(|v| v.to_str().ok());
+
+    if let Some(host) = host_header {
+        let clean_host = host.split(',').next().unwrap_or(host).trim();
         if !clean_host.is_empty() && !clean_host.contains('/') && !clean_host.contains('\\') {
             return format!("{}://{}", proto, clean_host);
         }

@@ -54,6 +54,7 @@ pub async fn login_page(
         &tpl,
         context! {
             enabled_oauth => enabled_oauth,
+            meta_robots => "noindex, follow",
             ..base
         },
     )?;

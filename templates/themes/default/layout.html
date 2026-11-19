@@ -3,13 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{{ site_title }}{% endblock %}</title>
+    <title>{% block title %}{{ page_title | default(site_title) }}{% endblock %}</title>
+    <meta name="description" content="{{ meta_description | default(og_description | default(site_description | default(site_title))) }}">
+    <meta name="robots" content="{{ meta_robots | default('index, follow') }}">
+    {% if canonical_url %}
+    <link rel="canonical" href="{{ canonical_url }}">
+    <meta property="og:url" content="{{ canonical_url }}">
+    {% endif %}
     <meta property="og:site_name" content="{{ site_title }}">
     <meta property="og:type" content="{{ og_type | default('website') }}">
     <meta property="og:title" content="{{ og_title | default(site_title) }}">
-    {% if og_description %}<meta property="og:description" content="{{ og_description }}">{% endif %}
+    {% if og_description or meta_description or site_description %}<meta property="og:description" content="{{ og_description | default(meta_description | default(site_description)) }}">{% endif %}
     {% if og_image %}<meta property="og:image" content="{{ og_image }}">{% endif %}
+    <meta name="twitter:card" content="{% if og_image %}summary_large_image{% else %}summary{% endif %}">
+    <meta name="twitter:title" content="{{ og_title | default(site_title) }}">
+    {% if og_description or meta_description or site_description %}<meta name="twitter:description" content="{{ og_description | default(meta_description | default(site_description)) }}">{% endif %}
+    {% if og_image %}<meta name="twitter:image" content="{{ og_image }}">{% endif %}
     <link rel="alternate" type="application/rss+xml" title="{{ site_title }} RSS" href="/rss">
+    {% if json_ld %}<script type="application/ld+json">{{ json_ld | safe }}</script>{% endif %}
     <script>
         (function() {
             var saved = localStorage.getItem('rb_theme_mode');

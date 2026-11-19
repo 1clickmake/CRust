@@ -60,6 +60,9 @@ pub async fn build_base_context(
 
     let val = context! {
         site_title => site_title,
+        site_description => settings.site_description,
+        base_url => auth.base_url,
+        meta_robots => "index, follow",
         add_meta => settings.add_meta,
         analytics_script => settings.analytics_script,
         link_target => settings.link_target,
