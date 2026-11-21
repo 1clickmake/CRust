@@ -46,59 +46,64 @@
 <header class="navbar">
     <div class="container navbar-inner">
         <a href="/" class="brand"><i class="fas fa-bolt" style="color:var(--primary);"></i> {{ site_title }}</a>
-        <nav class="nav-links">
-            <a href="/">{{ t("common.home") }}</a>
-            {% for b in nav_boards %}
-            <a href="/board/{{ b.bo_table }}">{{ b.bo_subject }}</a>
-            {% endfor %}
-        </nav>
-        <div class="nav-user">
-            <!-- Language Switcher -->
-            <select class="lang-select" aria-label="{{ t('common.language') }}" onchange="if(this.value) window.location.href='/lang/' + this.value;">
-                {% for lang in supported_langs %}
-                <option value="{{ lang.code }}" {% if lang.code == current_lang %}selected{% endif %}>{{ lang.flag }} {{ lang.label }}</option>
+        <button type="button" class="btn btn-icon nav-hamburger" id="rb-mobile-menu-btn" aria-label="Menu" aria-expanded="false" onclick="rbToggleMobileMenu()">
+            <i id="rb-mobile-menu-icon" class="fas fa-bars"></i>
+        </button>
+        <div class="navbar-collapse" id="rb-navbar-collapse">
+            <nav class="nav-links">
+                <a href="/">{{ t("common.home") }}</a>
+                {% for b in nav_boards %}
+                <a href="/board/{{ b.bo_table }}">{{ b.bo_subject }}</a>
                 {% endfor %}
-            </select>
+            </nav>
+            <div class="nav-user">
+                <!-- Language Switcher -->
+                <select class="lang-select" aria-label="{{ t('common.language') }}" onchange="if(this.value) window.location.href='/lang/' + this.value;">
+                    {% for lang in supported_langs %}
+                    <option value="{{ lang.code }}" {% if lang.code == current_lang %}selected{% endif %}>{{ lang.flag }} {{ lang.label }}</option>
+                    {% endfor %}
+                </select>
 
-            <!-- Light / Dark Mode Switch -->
-            <button type="button" id="rb-theme-toggle" class="btn btn-icon" title="{{ t('common.toggle_theme') }}" onclick="rbToggleTheme()">
-                <i id="rb-theme-icon" class="fas fa-moon"></i>
-            </button>
+                <!-- Light / Dark Mode Switch -->
+                <button type="button" id="rb-theme-toggle" class="btn btn-icon" title="{{ t('common.toggle_theme') }}" onclick="rbToggleTheme()">
+                    <i id="rb-theme-icon" class="fas fa-moon"></i>
+                </button>
 
-            {% if current_user %}
-                <div class="noti-wrapper" id="rb-noti-wrapper">
-                    <button type="button" class="btn noti-bell-btn" id="rb-noti-bell" title="{{ t('noti.title') }}" onclick="rbToggleNotiDropdown(event)">
-                        <i class="fas fa-bell"></i>
-                        <span class="noti-badge" id="rb-noti-badge" style="{% if unread_noti <= 0 %}display:none;{% endif %}">{{ unread_noti }}</span>
-                    </button>
-                    <div class="noti-dropdown" id="rb-noti-dropdown">
-                        <div class="noti-dropdown-header">
-                            <span><i class="fas fa-bell" style="color:var(--primary);"></i> {{ t("noti.title") }}</span>
-                            <button type="button" class="noti-read-all-btn" onclick="rbMarkAllNotiRead()">{{ t("noti.mark_all_read") }}</button>
-                        </div>
-                        <div class="noti-list" id="rb-noti-list">
-                            <div class="noti-empty">{{ t("noti.loading") }}</div>
+                {% if current_user %}
+                    <div class="noti-wrapper" id="rb-noti-wrapper">
+                        <button type="button" class="btn noti-bell-btn" id="rb-noti-bell" title="{{ t('noti.title') }}" onclick="rbToggleNotiDropdown(event)">
+                            <i class="fas fa-bell"></i>
+                            <span class="noti-badge" id="rb-noti-badge" style="{% if unread_noti <= 0 %}display:none;{% endif %}">{{ unread_noti }}</span>
+                        </button>
+                        <div class="noti-dropdown" id="rb-noti-dropdown">
+                            <div class="noti-dropdown-header">
+                                <span><i class="fas fa-bell" style="color:var(--primary);"></i> {{ t("noti.title") }}</span>
+                                <button type="button" class="noti-read-all-btn" onclick="rbMarkAllNotiRead()">{{ t("noti.mark_all_read") }}</button>
+                            </div>
+                            <div class="noti-list" id="rb-noti-list">
+                                <div class="noti-empty">{{ t("noti.loading") }}</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <a href="/member/memo" class="btn btn-icon" title="{{ t('memo.title') }}">
-                    <i class="fas fa-envelope"></i>
-                </a>
-                <a href="/member/profile" class="btn">
-                    <i class="fas fa-user"></i> {{ current_user.mb_name }}
-                    <span style="opacity:0.75;">(Lv.{{ current_user.mb_level }} · {{ current_user.mb_point | comma }}P)</span>
-                </a>
-                {% if current_user.mb_level >= 10 %}
-                <a href="/admin" class="btn btn-primary"><i class="fas fa-sliders"></i> {{ t("common.dashboard") }}</a>
+                    <a href="/member/memo" class="btn btn-icon" title="{{ t('memo.title') }}">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                    <a href="/member/profile" class="btn">
+                        <i class="fas fa-user"></i> {{ current_user.mb_name }}
+                        <span style="opacity:0.75;">(Lv.{{ current_user.mb_level }} · {{ current_user.mb_point | comma }}P)</span>
+                    </a>
+                    {% if current_user.mb_level >= 10 %}
+                    <a href="/admin" class="btn btn-primary"><i class="fas fa-sliders"></i> {{ t("common.dashboard") }}</a>
+                    {% endif %}
+                    <form action="/member/logout" method="post" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn">{{ t("common.logout") }}</button>
+                    </form>
+                {% else %}
+                    <a href="/member/login" class="btn">{{ t("common.login") }}</a>
+                    <a href="/member/register" class="btn btn-primary">{{ t("common.register") }}</a>
                 {% endif %}
-                <form action="/member/logout" method="post" style="display:inline;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                    <button type="submit" class="btn">{{ t("common.logout") }}</button>
-                </form>
-            {% else %}
-                <a href="/member/login" class="btn">{{ t("common.login") }}</a>
-                <a href="/member/register" class="btn btn-primary">{{ t("common.register") }}</a>
-            {% endif %}
+            </div>
         </div>
     </div>
 </header>
@@ -128,6 +133,15 @@
         document.documentElement.setAttribute('data-theme', next);
         localStorage.setItem('rb_theme_mode', next);
         rbSyncThemeIcon();
+    }
+    function rbToggleMobileMenu() {
+        var menu = document.getElementById('rb-navbar-collapse');
+        var btn = document.getElementById('rb-mobile-menu-btn');
+        var icon = document.getElementById('rb-mobile-menu-icon');
+        if (!menu) return;
+        var isOpen = menu.classList.toggle('is-open');
+        if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        if (icon) icon.className = isOpen ? 'fas fa-xmark' : 'fas fa-bars';
     }
     document.addEventListener('DOMContentLoaded', rbSyncThemeIcon);
 </script>
