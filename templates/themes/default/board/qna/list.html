@@ -52,29 +52,30 @@
             {% for p in posts %}
             <tr class="{% if p.is_notice == 1 %}notice-row{% endif %}">
                 {% if current_user and current_user.mb_level >= 10 %}
-                <td><input type="checkbox" class="chk-board-post" value="{{ p.id }}"></td>
+                <td class="col-check"><input type="checkbox" class="chk-board-post" value="{{ p.id }}"></td>
                 {% endif %}
-                <td>{% if p.is_notice == 1 %}<span style="color:var(--primary);">{{ t("board.notice_badge") }}</span>{% else %}{{ total_count - offset - loop.index0 }}{% endif %}</td>
-                <td>
+                <td class="col-num">{% if p.is_notice == 1 %}<span style="color:var(--primary);">{{ t("board.notice_badge") }}</span>{% else %}{{ total_count - offset - loop.index0 }}{% endif %}</td>
+                <td class="col-status">
                     {% if p.extra and p.extra.qna_solved %}
                     <span style="display:inline-block; padding:2px 8px; border-radius:999px; background:rgba(16,185,129,0.16); color:#10b981; font-size:11px; font-weight:700;">{{ t("board.qna_solved") }}</span>
                     {% else %}
                     <span style="display:inline-block; padding:2px 8px; border-radius:999px; background:rgba(245,158,11,0.16); color:#f59e0b; font-size:11px; font-weight:700;">{{ t("board.qna_waiting") }}</span>
                     {% endif %}
                 </td>
-                <td>
+                <td class="col-title">
                     {% if p.wr_category %}<span style="font-size:12px; color:var(--muted);">[{{ p.wr_category }}]</span>{% endif %}
                     {% if p.is_secret == 1 %}<i class="fas fa-lock" style="font-size:12px; color:#f59e0b;"></i>{% endif %}
                     <a href="/board/{{ board.bo_table }}/{{ p.id }}">{{ p.wr_subject }}</a>
                     {% if p.wr_comment_count > 0 %}<span style="color:var(--primary); font-size:12px; font-weight:700;">[{{ p.wr_comment_count }}]</span>{% endif %}
                 </td>
-                <td>{{ p.wr_name }}</td>
-                <td>{{ p.wr_hit }}</td>
-                <td style="font-size:12px; color:var(--muted);">{{ p.created_at[:10] }}</td>
+                <td class="col-break"></td>
+                <td class="col-author">{{ p.wr_name }}</td>
+                <td class="col-hit">{{ p.wr_hit }}</td>
+                <td class="col-date" style="font-size:12px; color:var(--muted);">{{ p.created_at[:10] }}</td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="{% if current_user and current_user.mb_level >= 10 %}7{% else %}6{% endif %}" style="text-align:center; padding:40px; color:var(--muted);">{{ t("common.no_posts") }}</td>
+                <td class="col-empty" colspan="{% if current_user and current_user.mb_level >= 10 %}7{% else %}6{% endif %}" style="text-align:center; padding:40px; color:var(--muted);">{{ t("common.no_posts") }}</td>
             </tr>
             {% endfor %}
         </tbody>
