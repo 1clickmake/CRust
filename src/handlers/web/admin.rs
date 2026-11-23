@@ -73,6 +73,50 @@ pub struct BoardUpdateForm {
     pub csrf_token: Option<String>,
 }
 
+#[derive(serde::Serialize)]
+pub struct AdminDailyVisitor {
+    pub date: String,
+    pub uv: i64,
+    pub pv: i64,
+}
+
+#[derive(serde::Serialize)]
+pub struct AdminVisitorLog {
+    pub id: i64,
+    pub ip: String,
+    pub path: String,
+    pub device: String,
+    pub referrer: String,
+    pub created_at: String,
+}
+
+fn parse_user_agent_simple(ua: &str) -> String {
+    if ua.is_empty() {
+        return "-".to_string();
+    }
+    let u = ua.to_lowercase();
+    let dev = if u.contains("mobile") || u.contains("android") || u.contains("iphone") || u.contains("ipad") {
+        "📱 모바일"
+    } else {
+        "💻 PC"
+    };
+    let mut browser = "웹";
+    if u.contains("kakaotalk") {
+        browser = "카카오톡";
+    } else if u.contains("naver") {
+        browser = "네이버";
+    } else if u.contains("chrome") && !u.contains("edg") {
+        browser = "Chrome";
+    } else if u.contains("safari") && !u.contains("chrome") {
+        browser = "Safari";
+    } else if u.contains("edg") {
+        browser = "Edge";
+    } else if u.contains("firefox") {
+        browser = "Firefox";
+    }
+    format!("{} ({})", dev, browser)
+}
+
 pub async fn dashboard(
     State(state): State<AppState>,
     auth: AuthContext,
@@ -102,6 +146,66 @@ pub async fn dashboard(
     .fetch_one(&state.db)
     .await?;
 
+    // Visitor Stats
+    let (today_uv, today_pv): (i64, i64) = sqlx::query_as(
+        "SELECT COUNT(DISTINCT ip), COUNT(*) FROM visitor_logs WHERE date(created_at, '+9 hours') = date('now', '+9 hours')",
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or((0, 0));
+
+    let (yesterday_uv, yesterday_pv): (i64, i64) = sqlx::query_as(
+        "SELECT COUNT(DISTINCT ip), COUNT(*) FROM visitor_logs WHERE date(created_at, '+9 hours') = date('now', '+9 hours', '-1 day')",
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or((0, 0));
+
+    let (total_uv, total_pv): (i64, i64) = sqlx::query_as(
+        "SELECT COUNT(DISTINCT ip), COUNT(*) FROM visitor_logs",
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or((0, 0));
+
+    let daily_db = sqlx::query_as::<_, (String, i64, i64)>(
+        "SELECT date(created_at, '+9 hours') as d, COUNT(DISTINCT ip), COUNT(*)
+         FROM visitor_logs
+         GROUP BY d
+         ORDER BY d DESC
+         LIMIT 7",
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+
+    let daily_stats: Vec<AdminDailyVisitor> = daily_db
+        .into_iter()
+        .map(|(d, uv, pv)| AdminDailyVisitor { date: d, uv, pv })
+        .collect();
+
+    let logs_db = sqlx::query_as::<_, (i64, String, String, String, String, String)>(
+        "SELECT id, ip, path, user_agent, referrer, datetime(created_at, '+9 hours')
+         FROM visitor_logs
+         ORDER BY id DESC
+         LIMIT 20",
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+
+    let recent_logs: Vec<AdminVisitorLog> = logs_db
+        .into_iter()
+        .map(|(id, ip, path, ua, referrer, created_at)| AdminVisitorLog {
+            id,
+            ip,
+            path,
+            device: parse_user_agent_simple(&ua),
+            referrer,
+            created_at,
+        })
+        .collect();
+
     let active_theme = state.active_theme.read().await.clone();
 
     let html = state.render_template(
@@ -113,6 +217,14 @@ pub async fn dashboard(
             total_comments => total_comments,
             total_files => total_files,
             total_file_mb => format!("{:.2}", (total_file_bytes as f64) / 1048576.0),
+            today_uv => today_uv,
+            today_pv => today_pv,
+            yesterday_uv => yesterday_uv,
+            yesterday_pv => yesterday_pv,
+            total_uv => total_uv,
+            total_pv => total_pv,
+            daily_stats => daily_stats,
+            recent_logs => recent_logs,
             ..base
         },
     )?;

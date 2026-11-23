@@ -22,6 +22,95 @@
     </div>
 </div>
 
+<div class="card" style="margin-bottom:24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="margin:0; font-size:18px; display:flex; align-items:center; gap:8px;">
+            👥 실시간 접속자 트래픽 현황
+        </h3>
+        <span style="font-size:12px; color:var(--muted); background:rgba(255,255,255,0.06); padding:4px 10px; border-radius:12px;">실시간 자동 집계 중</span>
+    </div>
+    
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px; margin-bottom:20px;">
+        <div style="background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.25); border-radius:10px; padding:16px;">
+            <div style="font-size:12px; color:#818cf8; font-weight:600; margin-bottom:6px;">오늘 접속자 (Today)</div>
+            <div style="font-size:24px; font-weight:800; color:#fff;">{{ today_uv }} <span style="font-size:13px; font-weight:normal; color:var(--muted);">명 (UV)</span></div>
+            <div style="font-size:12px; color:var(--muted); margin-top:4px;">페이지뷰 {{ today_pv }} PV</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:16px;">
+            <div style="font-size:12px; color:var(--muted); font-weight:600; margin-bottom:6px;">어제 접속자 (Yesterday)</div>
+            <div style="font-size:24px; font-weight:800; color:#e2e8f0;">{{ yesterday_uv }} <span style="font-size:13px; font-weight:normal; color:var(--muted);">명</span></div>
+            <div style="font-size:12px; color:var(--muted); margin-top:4px;">페이지뷰 {{ yesterday_pv }} PV</div>
+        </div>
+        <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:16px;">
+            <div style="font-size:12px; color:#34d399; font-weight:600; margin-bottom:6px;">누적 총 접속자 (Total)</div>
+            <div style="font-size:24px; font-weight:800; color:#fff;">{{ total_uv }} <span style="font-size:13px; font-weight:normal; color:var(--muted);">명</span></div>
+            <div style="font-size:12px; color:var(--muted); margin-top:4px;">누적 페이지뷰 {{ total_pv }} PV</div>
+        </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1.6fr; gap:20px; align-items:start;">
+        <!-- 일별 트렌드 (최근 7일) -->
+        <div>
+            <h4 style="margin:0 0 12px; font-size:14px; color:#cbd5e1;">📅 최근 7일 추이</h4>
+            <div style="border:1px solid rgba(255,255,255,0.08); border-radius:8px; overflow:hidden;">
+                <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left;">
+                    <thead>
+                        <tr style="background:rgba(255,255,255,0.05); color:var(--muted); border-bottom:1px solid rgba(255,255,255,0.08);">
+                            <th style="padding:8px 12px;">날짜</th>
+                            <th style="padding:8px 12px;">방문자 (UV)</th>
+                            <th style="padding:8px 12px;">페이지뷰 (PV)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in daily_stats %}
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                            <td style="padding:8px 12px; font-weight:600; color:#94a3b8;">{{ s.date }}</td>
+                            <td style="padding:8px 12px; color:#818cf8; font-weight:700;">{{ s.uv }}명</td>
+                            <td style="padding:8px 12px; color:#cbd5e1;">{{ s.pv }}회</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" style="padding:16px; text-align:center; color:var(--muted);">아직 집계된 일별 통계가 없습니다.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 실시간 접속 기록 (최근 20건) -->
+        <div>
+            <h4 style="margin:0 0 12px; font-size:14px; color:#cbd5e1;">⚡ 실시간 접속 로그 (최근 20건)</h4>
+            <div style="border:1px solid rgba(255,255,255,0.08); border-radius:8px; overflow:hidden; max-height:280px; overflow-y:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left;">
+                    <thead>
+                        <tr style="background:rgba(255,255,255,0.05); color:var(--muted); border-bottom:1px solid rgba(255,255,255,0.08); position:sticky; top:0;">
+                            <th style="padding:8px 10px;">접속시간</th>
+                            <th style="padding:8px 10px;">IP</th>
+                            <th style="padding:8px 10px;">경로</th>
+                            <th style="padding:8px 10px;">환경</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in recent_logs %}
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                            <td style="padding:7px 10px; color:#94a3b8; white-space:nowrap;">{{ log.created_at }}</td>
+                            <td style="padding:7px 10px; font-family:monospace; color:#38bdf8;">{{ log.ip }}</td>
+                            <td style="padding:7px 10px; font-family:monospace; color:#f1f5f9; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ log.path }}">{{ log.path }}</td>
+                            <td style="padding:7px 10px; color:#a1a1aa; white-space:nowrap;">{{ log.device }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" style="padding:16px; text-align:center; color:var(--muted);">기록된 접속 로그가 없습니다.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="card">
     <h3 style="margin:0 0 10px;">🎨 {{ t("admin.current_theme_title") }}</h3>
     <p style="margin:0 0 14px; color:var(--muted);">{{ t("common.active_theme") }}: <strong style="color:var(--accent);">{{ active_theme }}</strong></p>

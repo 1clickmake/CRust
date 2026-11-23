@@ -380,3 +380,15 @@ CREATE TABLE IF NOT EXISTS ai_change_backups (
     rolled_back_at DATETIME DEFAULT NULL,
     FOREIGN KEY (admin_id) REFERENCES members(id) ON DELETE CASCADE
 );
+
+-- 18. 실시간 방문자 접속 로그 (Visitor Traffic Logs)
+CREATE TABLE IF NOT EXISTS visitor_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ip VARCHAR(45) NOT NULL,
+    path VARCHAR(255) NOT NULL,
+    user_agent TEXT NOT NULL DEFAULT '',
+    referrer TEXT NOT NULL DEFAULT '',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_crust_visitor_created ON visitor_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_crust_visitor_ip ON visitor_logs(ip);

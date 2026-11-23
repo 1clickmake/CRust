@@ -16,7 +16,9 @@ use crate::handlers::{api, web};
 use crate::services::{file_service, theme_service};
 use crate::state::AppState;
 use crate::storage::build_storage_backend;
-use axum::extract::DefaultBodyLimit;
+use axum::extract::{DefaultBodyLimit, Request, State};
+use axum::middleware::{from_fn_with_state, Next};
+use axum::response::Response;
 use axum::routing::{get, post};
 use axum::Router;
 use std::sync::Arc;
@@ -161,6 +163,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .nest_service("/static", ServeDir::new("static"))
         .route("/uploads/{*key}", get(api::download::serve_upload_asset))
         .layer(DefaultBodyLimit::max(max_body))
+        .layer(from_fn_with_state(state.clone(), visitor_logger_middleware))
         .with_state(state);
 
     let addr = format!("{}:{}", cfg.server.host, cfg.server.port);
@@ -170,4 +173,61 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+async fn visitor_logger_middleware(
+    State(state): State<AppState>,
+    req: Request,
+    next: Next,
+) -> Response {
+    let path = req.uri().path().to_string();
+    if !path.starts_with("/static")
+        && !path.starts_with("/theme-assets")
+        && !path.starts_with("/uploads")
+        && !path.ends_with(".ico")
+        && !path.ends_with(".png")
+        && !path.ends_with(".jpg")
+        && !path.ends_with(".svg")
+    {
+        let headers = req.headers();
+        let ip = headers
+            .get("x-forwarded-for")
+            .and_then(|v| v.to_str().ok())
+            .and_then(|s| s.split(',').next())
+            .map(|s| s.trim().to_string())
+            .or_else(|| {
+                headers
+                    .get("x-real-ip")
+                    .and_then(|v| v.to_str().ok())
+                    .map(|s| s.trim().to_string())
+            })
+            .unwrap_or_else(|| "127.0.0.1".to_string());
+
+        let ua = headers
+            .get("user-agent")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("")
+            .to_string();
+
+        let referrer = headers
+            .get("referer")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("")
+            .to_string();
+
+        let db = state.db.clone();
+        tokio::spawn(async move {
+            let _ = sqlx::query(
+                "INSERT INTO visitor_logs (ip, path, user_agent, referrer, created_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)",
+            )
+            .bind(ip)
+            .bind(path)
+            .bind(ua)
+            .bind(referrer)
+            .execute(&db)
+            .await;
+        });
+    }
+
+    next.run(req).await
 }
