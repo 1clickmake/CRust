@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -11,16 +12,29 @@ permissions:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             archive: tar.gz
+            asset_tag: linux-x64
             bin: rust_board
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             archive: zip
+            asset_tag: windows-x64
             bin: rust_board.exe
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            archive: zip
+            asset_tag: macos-arm64
+            bin: rust_board
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            archive: zip
+            asset_tag: macos-x64
+            bin: rust_board
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -36,26 +50,36 @@ jobs:
       - name: Package release archive (Linux)
         if: matrix.archive == 'tar.gz'
         run: |
-          mkdir -p dist/CRust
+          mkdir -p dist/CRust/uploads
           cp target/${{ matrix.target }}/release/${{ matrix.bin }} dist/CRust/
           cp -r templates static locales dist/CRust/
-          mkdir -p dist/CRust/uploads
           cp config.example.toml README.md LICENSE dist/CRust/
-          tar -czf CRust-${{ github.ref_name }}-${{ matrix.target }}.tar.gz -C dist CRust
+          tar -czf CRust-${{ github.ref_name }}-${{ matrix.asset_tag }}.tar.gz -C dist CRust
+
+      - name: Package release archive (macOS)
+        if: matrix.archive == 'zip' && runner.os == 'macOS'
+        run: |
+          mkdir -p dist/CRust/uploads
+          cp target/${{ matrix.target }}/release/${{ matrix.bin }} dist/CRust/
+          chmod +x dist/CRust/${{ matrix.bin }}
+          cp -r templates static locales dist/CRust/
+          cp config.example.toml README.md LICENSE dist/CRust/
+          (cd dist/CRust && zip -r "../../CRust-${{ github.ref_name }}-${{ matrix.asset_tag }}.zip" .)
 
       - name: Package release archive (Windows)
-        if: matrix.archive == 'zip'
+        if: matrix.archive == 'zip' && runner.os == 'Windows'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist/CRust/uploads | Out-Null
           Copy-Item "target/${{ matrix.target }}/release/${{ matrix.bin }}" dist/CRust/
           Copy-Item -Recurse templates, static, locales dist/CRust/
           Copy-Item config.example.toml, README.md, LICENSE dist/CRust/
-          Compress-Archive -Path dist/CRust -DestinationPath "CRust-${{ github.ref_name }}-${{ matrix.target }}.zip"
+          Compress-Archive -Path dist/CRust/* -DestinationPath "CRust-${{ github.ref_name }}-${{ matrix.asset_tag }}.zip" -Force
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          generate_release_notes: true
           files: |
             CRust-*.tar.gz
             CRust-*.zip
